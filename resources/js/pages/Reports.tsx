@@ -28,7 +28,7 @@ export default function Reports() {
   }) => {
     if (params.format === "csv" || params.format === "pdf") {
       // For CSV/PDF, trigger download via direct URL
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
       const userId = localStorage.getItem("inventory_current_user");
       let userIdHeader = "";
       if (userId) {
