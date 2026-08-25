@@ -15,9 +15,6 @@ import type {
   TransactionFilters,
 } from "@/types";
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
-const API_PREFIX = import.meta.env.VITE_API_PREFIX || "/api";
-
 let getUserId: () => number | null = () => null;
 
 export function setUserIdGetter(fn: () => number | null) {
@@ -51,7 +48,7 @@ async function request<T>(
     headers["X-User-Id"] = String(userId);
   }
 
-  const response = await fetch(`${BASE_URL}${endpoint}`, {
+  const response = await fetch(endpoint, {
     ...options,
     headers,
   });
