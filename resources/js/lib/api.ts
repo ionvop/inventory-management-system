@@ -15,6 +15,8 @@ import type {
   TransactionFilters,
 } from "@/types";
 
+const API_PREFIX = "/api";
+
 let getUserId: () => number | null = () => null;
 
 export function setUserIdGetter(fn: () => number | null) {
