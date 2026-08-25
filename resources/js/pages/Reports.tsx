@@ -28,7 +28,6 @@ export default function Reports() {
   }) => {
     if (params.format === "csv" || params.format === "pdf") {
       // For CSV/PDF, trigger download via direct URL
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
       const userId = localStorage.getItem("inventory_current_user");
       let userIdHeader = "";
       if (userId) {
@@ -45,8 +44,7 @@ export default function Reports() {
       if (params.date_to) searchParams.set("date_to", params.date_to);
       searchParams.set("format", params.format);
 
-      const apiPrefix = import.meta.env.VITE_API_PREFIX || "/api";
-      const url = `${baseUrl}${apiPrefix}/reports/inventory?${searchParams.toString()}`;
+      const url = `/api/reports/inventory?${searchParams.toString()}`;
 
       // Use fetch to download with headers
       fetch(url, {
