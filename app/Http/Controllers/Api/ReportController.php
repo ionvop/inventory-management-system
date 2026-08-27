@@ -17,15 +17,15 @@ class ReportController extends Controller
 
         $items = Item::withStock()
             ->with(['transactions' => function ($q) use ($dateFrom, $dateTo) {
-                $q->when($dateFrom, fn ($q, $v) => $q->where('posted_time', '>=', $v))
-                  ->when($dateTo, fn ($q, $v) => $q->where('posted_time', '<=', $v))
+                $q->when($dateFrom, fn ($q, $v) => $q->where('posted_at', '>=', $v))
+                  ->when($dateTo, fn ($q, $v) => $q->where('posted_at', '<=', $v))
                   ->with('user:id,username')
-                  ->orderBy('posted_time');
+                  ->orderBy('posted_at');
             }])
             ->get();
 
         $payload = [
-            'generated_time' => now()->timestamp,
+            'generated_time' => now()->toIso8601String(),
             'date_from' => $dateFrom,
             'date_to' => $dateTo,
             'items' => $items,
@@ -49,7 +49,7 @@ class ReportController extends Controller
                     fputcsv($out, [$item->name, $item->unit, $item->current_stock, $item->minimum_stock, '', '', '', '']);
                 }
                 foreach ($item->transactions as $t) {
-                    fputcsv($out, [$item->name, $item->unit, $item->current_stock, $item->minimum_stock, date('Y-m-d', $t->posted_time), $t->movement, $t->quantity, $t->user->username]);
+                    fputcsv($out, [$item->name, $item->unit, $item->current_stock, $item->minimum_stock, $t->posted_at->format('Y-m-d'), $t->movement, $t->quantity, $t->user->username]);
                 }
             }
             fclose($out);
