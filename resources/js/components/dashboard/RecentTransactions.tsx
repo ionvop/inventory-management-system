@@ -6,9 +6,9 @@ interface RecentTransactionsProps {
   transactions?: Transaction[];
 }
 
-function formatDate(timestamp: number | undefined): string {
+function formatDate(timestamp: string | undefined): string {
   if (!timestamp) return "Unknown date";
-  const date = new Date(timestamp * 1000);
+  const date = new Date(timestamp);
   if (isNaN(date.getTime())) return "Unknown date";
   return format(date, "MMM d, h:mm a");
 }
@@ -56,7 +56,7 @@ export default function RecentTransactions({
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 {tx.user?.username ?? `User #${tx.user_id}`} ·{" "}
-                {formatDate(tx.posted_time)}
+                {formatDate(tx.posted_at)}
               </p>
             </div>
             <div className="text-right flex-shrink-0">
