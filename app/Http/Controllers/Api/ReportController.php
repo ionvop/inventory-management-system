@@ -34,8 +34,11 @@ class ReportController extends Controller
 
         return match ($format) {
             'csv' => $this->csv($items),
-            'pdf' => Pdf::loadView('reports.inventory', ['items' => $items])
-                ->download('inventory-report-'.now()->format('Y-m-d').'.pdf'),
+            'pdf' => Pdf::loadView('reports.inventory', [
+                'items' => $items,
+                'dateFrom' => $dateFrom,
+                'dateTo' => $dateTo,
+            ])->download('inventory-report-'.now()->format('Y-m-d').'.pdf'),
             default => $this->data($payload),
         };
     }
