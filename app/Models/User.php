@@ -11,7 +11,6 @@ class User extends Authenticatable
     use HasFactory;
 
     protected $fillable = ['username'];
-    public $timestamps = false; // we use the custom `time` column instead
 
     public function transactions()
     {
