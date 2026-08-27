@@ -133,7 +133,7 @@ List all users with optional filtering, sorting, and pagination.
 | Parameter | Type | Default | Description |
 |---|---|---|---|
 | `search` | string | — | Filter by username (partial match, case-insensitive) |
-| `sort` | string | `username` | Column to sort by. Allowed: `username`, `time` |
+| `sort` | string | `username` | Column to sort by. Allowed: `username`, `created_at` |
 | `order` | string | `asc` | Sort direction: `asc` or `desc` |
 | `limit` | int | `25` | Items per page |
 | `page` | int | `1` | Page number |
@@ -146,7 +146,8 @@ List all users with optional filtering, sorting, and pagination.
     {
       "id": 1,
       "username": "john",
-      "time": 1753545600
+      "created_at": "2026-08-27T12:00:00.000000Z",
+      "updated_at": "2026-08-27T12:00:00.000000Z"
     }
   ],
   "pagination": {
@@ -185,7 +186,8 @@ Create a new user.
   "data": {
     "id": 1,
     "username": "john",
-    "time": 1753545600
+    "created_at": "2026-08-27T12:00:00.000000Z",
+    "updated_at": "2026-08-27T12:00:00.000000Z"
   }
 }
 ```
@@ -203,7 +205,8 @@ Get a single user by ID.
   "data": {
     "id": 1,
     "username": "john",
-    "time": 1753545600
+    "created_at": "2026-08-27T12:00:00.000000Z",
+    "updated_at": "2026-08-27T12:00:00.000000Z"
   }
 }
 ```
@@ -235,7 +238,8 @@ Update an existing user. (Use `PUT` for full replacement.)
   "data": {
     "id": 1,
     "username": "john_updated",
-    "time": 1753545600
+    "created_at": "2026-08-27T12:00:00.000000Z",
+    "updated_at": "2026-08-27T12:00:00.000000Z"
   }
 }
 ```
@@ -279,11 +283,9 @@ List all items with computed stock levels, optional filtering, sorting, and manu
 {
   "data": [
     {
-      "id": 1,
-      "name": "Widget",
-      "unit": "pcs",
       "minimum_stock": 10,
-      "time": 1753545600,
+      "created_at": "2026-08-27T12:00:00.000000Z",
+      "updated_at": "2026-08-27T12:00:00.000000Z",
       "current_stock": 25,
       "is_low_stock": false
     }
@@ -340,7 +342,8 @@ Create a new inventory item.
     "name": "Widget",
     "unit": "pcs",
     "minimum_stock": 10,
-    "time": 1753545600,
+    "created_at": "2026-08-27T12:00:00.000000Z",
+    "updated_at": "2026-08-27T12:00:00.000000Z",
     "current_stock": 0,
     "is_low_stock": true
   }
@@ -362,7 +365,8 @@ Get a single item by ID, including computed stock attributes.
     "name": "Widget",
     "unit": "pcs",
     "minimum_stock": 10,
-    "time": 1753545600,
+    "created_at": "2026-08-27T12:00:00.000000Z",
+    "updated_at": "2026-08-27T12:00:00.000000Z",
     "current_stock": 25,
     "is_low_stock": false
   }
@@ -420,9 +424,9 @@ List transactions with optional filters, sorting, and pagination. Includes relat
 | `item_id` | int | — | Filter by item |
 | `user_id` | int | — | Filter by user |
 | `movement` | string | — | Filter by movement type: `in` or `out` |
-| `date_from` | int (timestamp) | — | Filter transactions with `posted_time >= date_from` |
-| `date_to` | int (timestamp) | — | Filter transactions with `posted_time <= date_to` |
-| `sort` | string | `posted_time` | Column to sort by |
+| `date_from` | string (ISO date) | — | Filter transactions with `posted_at >= date_from` |
+| `date_to` | string (ISO date) | — | Filter transactions with `posted_at <= date_to` |
+| `sort` | string | `posted_at` | Column to sort by |
 | `order` | string | `desc` | Sort direction: `asc` or `desc` |
 | `limit` | int | `25` | Items per page |
 | `page` | int | `1` | Page number |
@@ -438,8 +442,9 @@ List transactions with optional filters, sorting, and pagination. Includes relat
       "user_id": 1,
       "movement": "in",
       "quantity": 50,
-      "posted_time": 1753545600,
-      "time": 1753545600,
+      "posted_at": "2026-08-27T00:00:00.000000Z",
+      "created_at": "2026-08-27T12:00:00.000000Z",
+      "updated_at": "2026-08-27T12:00:00.000000Z",
       "item": { "id": 1, "name": "Widget" },
       "user": { "id": 1, "username": "john" }
     }
@@ -468,7 +473,7 @@ Record a new stock transaction (incoming or outgoing).
 | `item_id` | int | Yes | Must exist in the `items` table |
 | `movement` | string | Yes | `in` or `out` |
 | `quantity` | int | Yes | Minimum 1 |
-| `posted_time` | int (timestamp) | No | Unix timestamp. Defaults to start of current day (`00:00:00`) |
+| `posted_at` | string (ISO date) | No | Date the transaction is posted for. Defaults to start of current day (`00:00:00`) |
 
 **Request Example**
 
@@ -477,7 +482,7 @@ Record a new stock transaction (incoming or outgoing).
   "item_id": 1,
   "movement": "in",
   "quantity": 50,
-  "posted_time": 1753545600
+  "posted_at": "2026-08-27T00:00:00.000000Z"
 }
 ```
 
@@ -491,8 +496,9 @@ Record a new stock transaction (incoming or outgoing).
     "user_id": 1,
     "movement": "in",
     "quantity": 50,
-    "posted_time": 1753545600,
-    "time": 1753545600,
+    "posted_at": "2026-08-27T00:00:00.000000Z",
+    "created_at": "2026-08-27T12:00:00.000000Z",
+    "updated_at": "2026-08-27T12:00:00.000000Z",
     "item": { "id": 1, "name": "Widget" },
     "user": { "id": 1, "username": "john" }
   }
@@ -515,8 +521,9 @@ Get a single transaction by ID, with related item and user.
     "user_id": 1,
     "movement": "in",
     "quantity": 50,
-    "posted_time": 1753545600,
-    "time": 1753545600,
+    "posted_at": "2026-08-27T00:00:00.000000Z",
+    "created_at": "2026-08-27T12:00:00.000000Z",
+    "updated_at": "2026-08-27T12:00:00.000000Z",
     "item": { "id": 1, "name": "Widget" },
     "user": { "id": 1, "username": "john" }
   }
@@ -537,7 +544,7 @@ Update an existing transaction. Only the fields provided will be updated.
 |---|---|---|---|
 | `movement` | string | No | `in` or `out` |
 | `quantity` | int | No | Minimum 1 |
-| `posted_time` | int (timestamp) | No | Unix timestamp |
+| `posted_at` | string (ISO date) | No | Date the transaction is posted for |
 
 **Response** `200`
 
@@ -549,8 +556,9 @@ Update an existing transaction. Only the fields provided will be updated.
     "user_id": 1,
     "movement": "out",
     "quantity": 10,
-    "posted_time": 1753545600,
-    "time": 1753545600,
+    "posted_at": "2026-08-27T00:00:00.000000Z",
+    "created_at": "2026-08-27T12:00:00.000000Z",
+    "updated_at": "2026-08-27T12:00:00.000000Z",
     "item": { "id": 1, "name": "Widget" },
     "user": { "id": 1, "username": "john" }
   }
@@ -603,8 +611,9 @@ Returns a dashboard summary including total items, low stock items, today's tran
         "user_id": 1,
         "movement": "out",
         "quantity": 5,
-        "posted_time": 1753545600,
-        "time": 1753545600,
+        "posted_at": "2026-08-27T00:00:00.000000Z",
+        "created_at": "2026-08-27T12:00:00.000000Z",
+        "updated_at": "2026-08-27T12:00:00.000000Z",
         "item": { "id": 1, "name": "Widget" },
         "user": { "id": 1, "username": "john" }
       }
@@ -636,8 +645,8 @@ Generate an inventory report in JSON, CSV, or PDF format.
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
-| `date_from` | int (timestamp) | — | Filter transactions from this date (based on `posted_time`) |
-| `date_to` | int (timestamp) | — | Filter transactions up to this date (based on `posted_time`) |
+| `date_from` | string (ISO date) | — | Filter transactions from this date (based on `posted_at`) |
+| `date_to` | string (ISO date) | — | Filter transactions up to this date (based on `posted_at`) |
 | `format` | string | `json` | Output format: `json`, `csv`, or `pdf` |
 
 **Response** (JSON format, `200`)
@@ -645,9 +654,9 @@ Generate an inventory report in JSON, CSV, or PDF format.
 ```json
 {
   "data": {
-    "generated_time": 1753545600,
-    "date_from": "1753460000",
-    "date_to": "1753545600",
+    "generated_time": "2026-08-27T12:00:00.000000Z",
+    "date_from": "2026-08-26T00:00:00.000000Z",
+    "date_to": "2026-08-27T00:00:00.000000Z",
     "items": [
       {
         "id": 1,
@@ -663,8 +672,9 @@ Generate an inventory report in JSON, CSV, or PDF format.
             "user_id": 1,
             "movement": "in",
             "quantity": 50,
-            "posted_time": 1753545600,
-            "time": 1753545600,
+            "posted_at": "2026-08-27T00:00:00.000000Z",
+            "created_at": "2026-08-27T12:00:00.000000Z",
+            "updated_at": "2026-08-27T12:00:00.000000Z",
             "user": { "id": 1, "username": "john" }
           }
         ]
@@ -737,7 +747,8 @@ Bulk update application settings. Any keys sent will be created or updated; keys
 |---|---|---|
 | `id` | bigint (PK) | Auto-incrementing ID |
 | `username` | string | Unique username |
-| `time` | bigint (timestamp) | Creation/modification timestamp |
+| `created_at` | timestamp | Creation timestamp |
+| `updated_at` | timestamp | Last update timestamp |
 
 ### Item
 
@@ -747,7 +758,8 @@ Bulk update application settings. Any keys sent will be created or updated; keys
 | `name` | string | Unique item name |
 | `unit` | string | Unit of measurement (e.g., pcs, kg, box) |
 | `minimum_stock` | int | Minimum stock threshold (default 0) |
-| `time` | bigint (timestamp) | Creation/modification timestamp |
+| `created_at` | timestamp | Creation timestamp |
+| `updated_at` | timestamp | Last update timestamp |
 
 **Computed Attributes** (not stored in DB):
 
@@ -769,8 +781,9 @@ Bulk update application settings. Any keys sent will be created or updated; keys
 | `user_id` | bigint (FK) | References `users.id` (restrict on delete) |
 | `movement` | enum(`in`, `out`) | Stock movement direction |
 | `quantity` | int | Quantity moved |
-| `posted_time` | bigint (timestamp) | Date the transaction is posted for (defaults to start of day) |
-| `time` | bigint (timestamp) | Actual creation timestamp |
+| `posted_at` | datetime | Date the transaction is posted for (defaults to start of day) |
+| `created_at` | timestamp | Creation timestamp |
+| `updated_at` | timestamp | Last update timestamp |
 
 **Relationships:**
 
@@ -783,6 +796,8 @@ Bulk update application settings. Any keys sent will be created or updated; keys
 |---|---|---|
 | `key` | string (PK) | Setting key |
 | `value` | text (nullable) | Setting value |
+| `created_at` | timestamp | Creation timestamp |
+| `updated_at` | timestamp | Last update timestamp |
 
 ---
 
