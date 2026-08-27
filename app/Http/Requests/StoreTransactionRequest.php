@@ -26,7 +26,7 @@ class StoreTransactionRequest extends FormRequest
             'item_id' => 'required|exists:items,id',
             'movement' => 'required|in:in,out',
             'quantity' => 'required|integer|min:1',
-            'posted_at' => 'nullable|date',
+            'posted_at' => 'nullable|date_format:Y-m-d\TH:i:s',
         ];
     }
 }
