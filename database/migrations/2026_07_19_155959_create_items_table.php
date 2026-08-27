@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('name')->unique();
             $table->string('unit');
             $table->unsignedInteger('minimum_stock')->default(0);
-            $table->unsignedBigInteger('time')->default(now()->timestamp);
+            $table->timestamps();
         });
     }
 
