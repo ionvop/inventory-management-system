@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Item;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -17,8 +18,8 @@ class ReportController extends Controller
 
         $items = Item::withStock()
             ->with(['transactions' => function ($q) use ($dateFrom, $dateTo) {
-                $q->when($dateFrom, fn ($q, $v) => $q->where('posted_at', '>=', $v))
-                  ->when($dateTo, fn ($q, $v) => $q->where('posted_at', '<=', $v))
+                $q->when($dateFrom, fn ($q, $v) => $q->where('posted_at', '>=', Carbon::parse($v)->startOfDay()))
+                  ->when($dateTo, fn ($q, $v) => $q->where('posted_at', '<=', Carbon::parse($v)->endOfDay()))
                   ->with('user:id,username')
                   ->orderBy('posted_at');
             }])
@@ -49,7 +50,7 @@ class ReportController extends Controller
                     fputcsv($out, [$item->name, $item->unit, $item->current_stock, $item->minimum_stock, '', '', '', '']);
                 }
                 foreach ($item->transactions as $t) {
-                    fputcsv($out, [$item->name, $item->unit, $item->current_stock, $item->minimum_stock, $t->posted_at->format('Y-m-d'), $t->movement, $t->quantity, $t->user->username]);
+                    fputcsv($out, [$item->name, $item->unit, $item->current_stock, $item->minimum_stock, $t->posted_at->format('Y-m-d H:i'), $t->movement, $t->quantity, $t->user->username]);
                 }
             }
             fclose($out);
