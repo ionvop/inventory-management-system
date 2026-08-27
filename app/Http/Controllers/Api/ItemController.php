@@ -43,7 +43,7 @@ class ItemController extends Controller
 
     public function store(StoreItemRequest $request)
     {
-        $item = Item::create($request->validated() + ['time' => now()->timestamp]);
+        $item = Item::create($request->validated());
         return $this->data($item->loadStock(), 201);
     }
 
