@@ -6,8 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Transaction extends Model
 {
-    protected $fillable = ['item_id', 'user_id', 'movement', 'quantity', 'posted_time'];
-    public $timestamps = false;
+    protected $fillable = ['item_id', 'user_id', 'movement', 'quantity', 'posted_at'];
+    protected $casts = ['posted_at' => 'datetime'];
 
     public function item()
     {
