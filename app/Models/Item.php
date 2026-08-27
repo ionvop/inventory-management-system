@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 class Item extends Model
 {
     protected $fillable = ['name', 'unit', 'minimum_stock'];
-    public $timestamps = false;
     protected $appends = ['current_stock', 'is_low_stock'];
 
     public function transactions()
