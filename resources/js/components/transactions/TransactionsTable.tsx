@@ -4,16 +4,16 @@ import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import type { Transaction } from "@/types";
 
-function formatDate(timestamp: number | undefined): string {
+function formatDate(timestamp: string | undefined): string {
   if (!timestamp) return "Unknown date";
-  const date = new Date(timestamp * 1000);
+  const date = new Date(timestamp);
   if (isNaN(date.getTime())) return "Unknown date";
   return format(date, "MMM d, yyyy");
 }
 
-function formatDateTime(timestamp: number | undefined): string {
+function formatDateTime(timestamp: string | undefined): string {
   if (!timestamp) return "Unknown date";
-  const date = new Date(timestamp * 1000);
+  const date = new Date(timestamp);
   if (isNaN(date.getTime())) return "Unknown date";
   return format(date, "MMM d, h:mm a");
 }
@@ -99,7 +99,7 @@ export default function TransactionsTable({
                   {tx.user?.username ?? `User #${tx.user_id}`}
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                  {formatDate(tx.posted_time)}
+                  {formatDate(tx.posted_at)}
                 </td>
                 <td className="px-4 py-3 text-right">
                   <div className="flex items-center justify-end gap-1">
@@ -141,7 +141,7 @@ export default function TransactionsTable({
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   {tx.user?.username ?? `User #${tx.user_id}`} ·{" "}
-                  {formatDateTime(tx.posted_time)}
+                  {formatDateTime(tx.posted_at)}
                 </p>
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
