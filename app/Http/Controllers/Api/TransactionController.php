@@ -7,6 +7,7 @@ use App\Http\Requests\StoreTransactionRequest;
 use App\Http\Requests\UpdateTransactionRequest;
 use App\Models\Item;
 use App\Models\Transaction;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class TransactionController extends Controller
@@ -17,8 +18,8 @@ class TransactionController extends Controller
             ->when($request->query('item_id'), fn ($q, $v) => $q->where('item_id', $v))
             ->when($request->query('user_id'), fn ($q, $v) => $q->where('user_id', $v))
             ->when($request->query('movement'), fn ($q, $v) => $q->where('movement', $v))
-            ->when($request->query('date_from'), fn ($q, $v) => $q->where('posted_at', '>=', $v))
-            ->when($request->query('date_to'), fn ($q, $v) => $q->where('posted_at', '<=', $v))
+            ->when($request->query('date_from'), fn ($q, $v) => $q->where('posted_at', '>=', Carbon::parse($v)->startOfDay()))
+            ->when($request->query('date_to'), fn ($q, $v) => $q->where('posted_at', '<=', Carbon::parse($v)->endOfDay()))
             ->orderBy($request->query('sort', 'posted_at'), $request->query('order', 'desc'));
 
         return $this->paginated($query->paginate($request->query('limit', 25)));
@@ -44,7 +45,7 @@ class TransactionController extends Controller
 
         $transaction = Transaction::create($validated + [
             'user_id' => $request->user()->id,
-            'posted_at' => $validated['posted_at'] ?? now()->startOfDay(),
+            'posted_at' => $validated['posted_at'] ?? now(),
         ]);
 
         return $this->data($transaction->load(['item:id,name', 'user:id,username']), 201);
