@@ -17,12 +17,12 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->restrictOnDelete();
             $table->enum('movement', ['in', 'out']);
             $table->unsignedInteger('quantity');
-            $table->unsignedBigInteger('posted_time');
-            $table->unsignedBigInteger('time')->default(now()->timestamp);
+            $table->dateTime('posted_at');
+            $table->timestamps();
 
             $table->index('item_id');
             $table->index('user_id');
-            $table->index('posted_time');
+            $table->index('posted_at');
         });
     }
 
