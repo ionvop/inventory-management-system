@@ -3,7 +3,8 @@
 export interface User {
   id: number;
   username: string;
-  time: number;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Item {
@@ -13,7 +14,8 @@ export interface Item {
   current_stock: number;
   minimum_stock: number;
   is_low_stock: boolean;
-  time: number;
+  created_at: string;
+  updated_at: string;
 }
 
 export type MovementType = "in" | "out";
@@ -26,16 +28,17 @@ export interface Transaction {
   user?: User;
   movement: MovementType;
   quantity: number;
-  time: number;
-  posted_time: number;
+  created_at: string;
+  updated_at: string;
+  posted_at: string;
 }
 
 export interface Setting {
   id: number;
   key: string;
   value: string;
-  created_at: number;
-  updated_at: number;
+  created_at: string;
+  updated_at: string;
 }
 
 // ============ API Response Types ============
@@ -102,13 +105,13 @@ export interface CreateTransactionRequest {
   item_id: number;
   movement: MovementType;
   quantity: number;
-  posted_time?: number;
+  posted_at?: string;
 }
 
 export interface UpdateTransactionRequest {
   movement?: MovementType;
   quantity?: number;
-  posted_time?: number;
+  posted_at?: string;
 }
 
 export interface UpdateSettingsRequest {
