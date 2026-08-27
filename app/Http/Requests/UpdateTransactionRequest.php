@@ -25,7 +25,7 @@ class UpdateTransactionRequest extends FormRequest
         return [
             'movement' => 'sometimes|in:in,out',
             'quantity' => 'sometimes|integer|min:1',
-            'posted_at' => 'sometimes|date',
+            'posted_at' => 'sometimes|date_format:Y-m-d\TH:i:s',
         ];
     }
 }
