@@ -17,9 +17,9 @@ class TransactionController extends Controller
             ->when($request->query('item_id'), fn ($q, $v) => $q->where('item_id', $v))
             ->when($request->query('user_id'), fn ($q, $v) => $q->where('user_id', $v))
             ->when($request->query('movement'), fn ($q, $v) => $q->where('movement', $v))
-            ->when($request->query('date_from'), fn ($q, $v) => $q->where('posted_time', '>=', $v))
-            ->when($request->query('date_to'), fn ($q, $v) => $q->where('posted_time', '<=', $v))
-            ->orderBy($request->query('sort', 'posted_time'), $request->query('order', 'desc'));
+            ->when($request->query('date_from'), fn ($q, $v) => $q->where('posted_at', '>=', $v))
+            ->when($request->query('date_to'), fn ($q, $v) => $q->where('posted_at', '<=', $v))
+            ->orderBy($request->query('sort', 'posted_at'), $request->query('order', 'desc'));
 
         return $this->paginated($query->paginate($request->query('limit', 25)));
     }
@@ -44,8 +44,7 @@ class TransactionController extends Controller
 
         $transaction = Transaction::create($validated + [
             'user_id' => $request->user()->id,
-            'posted_time' => $validated['posted_time'] ?? now()->startOfDay()->timestamp,
-            'time' => now()->timestamp,
+            'posted_at' => $validated['posted_at'] ?? now()->startOfDay(),
         ]);
 
         return $this->data($transaction->load(['item:id,name', 'user:id,username']), 201);
