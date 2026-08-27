@@ -21,14 +21,14 @@ class UserController extends Controller
 
         $sort = $request->query('sort', 'username');
         $order = $request->query('order', 'asc');
-        $query->orderBy(in_array($sort, ['username', 'time']) ? $sort : 'username', $order);
+        $query->orderBy(in_array($sort, ['username', 'created_at']) ? $sort : 'username', $order);
 
         return $this->paginated($query->paginate($request->query('limit', 25)));
     }
 
     public function store(StoreUserRequest $request)
     {
-        $user = User::create($request->validated() + ['time' => now()->timestamp]);
+        $user = User::create($request->validated());
         return $this->data($user, 201);
     }
 
