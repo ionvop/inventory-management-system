@@ -15,8 +15,11 @@ use Tests\TestCase;
 */
 
 pest()->extend(TestCase::class)
- // ->use(RefreshDatabase::class)
+    ->use(RefreshDatabase::class)
     ->in('Feature');
+
+pest()->extend(TestCase::class)
+    ->in('Unit');
 
 /*
 |--------------------------------------------------------------------------
@@ -47,4 +50,17 @@ expect()->extend('toBeOne', function () {
 function something()
 {
     // ..
+}
+
+/**
+ * Create a user and set the X-User-Id header for the current request,
+ * simulating the resolve.user middleware's authenticated user.
+ */
+function actingAsUser(): \App\Models\User
+{
+    $user = \App\Models\User::factory()->create();
+
+    test()->withHeader('X-User-Id', (string) $user->id);
+
+    return $user;
 }
