@@ -8,6 +8,7 @@ import {
   BarChart3,
   Settings,
   User,
+  Users,
   Sun,
   Moon,
   LogOut,
@@ -19,6 +20,7 @@ const tabs = [
   { to: "/items", icon: Package, label: "Items" },
   { to: "/transactions", icon: ArrowLeftRight, label: "Transactions" },
   { to: "/reports", icon: BarChart3, label: "Reports" },
+  { to: "/users", icon: Users, label: "Users" },
   { to: "/settings", icon: Settings, label: "Settings" },
 ];
 
