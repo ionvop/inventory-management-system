@@ -12,6 +12,7 @@ import Items from "@/pages/Items";
 import Transactions from "@/pages/Transactions";
 import Reports from "@/pages/Reports";
 import Settings from "@/pages/Settings";
+import Users from "@/pages/Users";
 import NotFound from "@/pages/NotFound";
 import type { ReactNode } from "react";
 
@@ -55,6 +56,7 @@ const App = () => (
                 <Route path="/transactions" element={<Transactions />} />
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/users" element={<Users />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
