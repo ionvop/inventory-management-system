@@ -1,14 +1,21 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@/contexts/UserContext";
-import { api } from "@/lib/api";
-import { User, Users, ArrowRight, Loader2, Package } from "lucide-react";
+import { api, ApiClientError } from "@/lib/api";
+import { User, Users, ArrowRight, Loader2, Package, AlertCircle } from "lucide-react";
+import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import type { User as UserType } from "@/types";
 
 export default function UserSelect() {
   const [users, setUsers] = useState<UserType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [newUsername, setNewUsername] = useState("");
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
   const { setUser, isAuthenticated } = useUser();
   const navigate = useNavigate();
 
@@ -28,6 +35,30 @@ export default function UserSelect() {
   const handleSelectUser = (user: UserType) => {
     setUser(user);
     navigate("/dashboard");
+  };
+
+  const handleCreateFirstUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const username = newUsername.trim();
+    if (!username) {
+      setCreateError("Username is required");
+      return;
+    }
+    setCreating(true);
+    setCreateError(null);
+    try {
+      const user = await api.createUser({ username });
+      toast.success("Welcome! Your account has been created.");
+      setUser(user);
+      navigate("/dashboard");
+    } catch (err) {
+      const msg =
+        err instanceof ApiClientError ? err.message : "Failed to create account";
+      setCreateError(msg);
+      toast.error(msg);
+    } finally {
+      setCreating(false);
+    }
   };
 
   return (
@@ -70,11 +101,59 @@ export default function UserSelect() {
         {!loading && !error && (
           <>
             {users.length === 0 ? (
-              <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-8 text-center">
-                <Users className="w-10 h-10 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                <p className="text-gray-500 dark:text-gray-400">
-                  No users available
-                </p>
+              <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-8">
+                <div className="text-center mb-6">
+                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900/40 mb-3">
+                    <Users className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                  </div>
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Get started
+                  </h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    No accounts exist yet. Create the first user to begin.
+                  </p>
+                </div>
+
+                <form onSubmit={handleCreateFirstUser} className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label
+                      htmlFor="first-username"
+                      className="text-sm font-medium text-gray-700 dark:text-gray-300"
+                    >
+                      Username
+                    </Label>
+                    <Input
+                      id="first-username"
+                      value={newUsername}
+                      onChange={(e) => {
+                        setNewUsername(e.target.value);
+                        setCreateError(null);
+                      }}
+                      placeholder="e.g. maria"
+                      disabled={creating}
+                    />
+                  </div>
+
+                  {createError && (
+                    <div className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400">
+                      <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                      <span>{createError}</span>
+                    </div>
+                  )}
+
+                  <Button
+                    type="submit"
+                    className="w-full gap-2"
+                    disabled={creating || !newUsername.trim()}
+                  >
+                    {creating ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <User className="w-4 h-4" />
+                    )}
+                    {creating ? "Creating..." : "Create Account"}
+                  </Button>
+                </form>
               </div>
             ) : (
               <div className="space-y-3">
