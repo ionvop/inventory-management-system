@@ -104,6 +104,14 @@ export const api = {
       body: JSON.stringify(data),
     }).then((res) => res.data),
 
+  createUser: async (data: { username: string }): Promise<User> => {
+    const res = await request<{ data: User }>(`${API_PREFIX}/auth/users`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    return res.data;
+  },
+
   // Dashboard
   getDashboardSummary: async (): Promise<DashboardSummary> => {
     const res = await request<{ data: DashboardSummary }>(`${API_PREFIX}/dashboard/summary`);
