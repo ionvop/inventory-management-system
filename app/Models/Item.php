@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Item extends Model
 {
+    use HasFactory;
+
     protected $fillable = ['name', 'unit', 'minimum_stock'];
     protected $appends = ['current_stock', 'is_low_stock'];
 
