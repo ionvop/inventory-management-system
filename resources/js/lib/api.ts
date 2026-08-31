@@ -94,8 +94,18 @@ function buildQueryString(params: Record<string, unknown>): string {
 export const api = {
   // Users
   getUsers: async (): Promise<User[]> => {
-    const res = await request<User[] | { data: User[] }>(`${API_PREFIX}/auth/users`);
-    return Array.isArray(res) ? res : (res as { data: User[] }).data;
+    const res = await request<PaginatedResponse<User>>(
+      `${API_PREFIX}/users?limit=100`
+    );
+    return res.data;
+  },
+
+  createUser: async (data: { username: string }): Promise<User> => {
+    const res = await request<{ data: User }>(`${API_PREFIX}/users`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    return res.data;
   },
 
   updateUser: (id: number, data: { username: string }) =>
@@ -104,13 +114,8 @@ export const api = {
       body: JSON.stringify(data),
     }).then((res) => res.data),
 
-  createUser: async (data: { username: string }): Promise<User> => {
-    const res = await request<{ data: User }>(`${API_PREFIX}/auth/users`, {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
-    return res.data;
-  },
+  deleteUser: (id: number) =>
+    request<void>(`${API_PREFIX}/users/${id}`, { method: "DELETE" }),
 
   // Dashboard
   getDashboardSummary: async (): Promise<DashboardSummary> => {
