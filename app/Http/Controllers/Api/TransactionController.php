@@ -27,7 +27,8 @@ class TransactionController extends Controller
 
     public function byItem(Request $request, Item $item)
     {
-        $request->merge(['item_id' => $item->id]);
+        // Put item_id into the query bag so index()'s $request->query('item_id') filter works.
+        $request->query->set('item_id', $item->id);
         return $this->index($request);
     }
 
