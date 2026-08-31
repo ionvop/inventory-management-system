@@ -118,12 +118,6 @@ export interface UpdateSettingsRequest {
   settings: Record<string, string>;
 }
 
-export interface CreateUserRequest {
-  username: string;
-}
-
-export interface UpdateUserRequest extends Partial<CreateUserRequest> {}
-
 export interface ReportRequest {
   date_from?: string;
   date_to?: string;
@@ -148,12 +142,6 @@ export interface TransactionFilters extends PaginationParams {
   movement?: MovementType;
   date_from?: string;
   date_to?: string;
-  sort?: string;
-  order?: "asc" | "desc";
-}
-
-export interface UserFilters extends PaginationParams {
-  search?: string;
   sort?: string;
   order?: "asc" | "desc";
 }
