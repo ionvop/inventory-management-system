@@ -37,6 +37,17 @@ return Application::configure(basePath: dirname(__DIR__))
             ]], 404);
         });
 
+        // Route model binding converts ModelNotFoundException into
+        // NotFoundHttpException before it reaches the handler, so we
+        // render the same custom JSON shape for both.
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\NotFoundHttpException $e, $request) {
+            return response()->json(['error' => [
+                'code' => 'NOT_FOUND',
+                'message' => 'The requested resource does not exist.',
+                'details' => null,
+            ]], 404);
+        });
+
         $exceptions->render(function (ApiException $e, $request) {
             return response()->json(['error' => [
                 'code' => $e->errorCode,
