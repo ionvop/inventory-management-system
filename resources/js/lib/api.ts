@@ -11,8 +11,11 @@ import type {
   CreateTransactionRequest,
   UpdateTransactionRequest,
   UpdateSettingsRequest,
+  CreateUserRequest,
+  UpdateUserRequest,
   ItemFilters,
   TransactionFilters,
+  UserFilters,
 } from "@/types";
 
 const API_PREFIX = "/api";
@@ -103,6 +106,20 @@ export const api = {
       method: "PUT",
       body: JSON.stringify(data),
     }).then((res) => res.data),
+
+  getUsersPaginated: (filters: UserFilters = {}) =>
+    request<PaginatedResponse<User>>(
+      `${API_PREFIX}/users${buildQueryString(filters as Record<string, unknown>)}`
+    ),
+
+  createUser: (data: CreateUserRequest) =>
+    request<User>(`${API_PREFIX}/users`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  deleteUser: (id: number) =>
+    request<void>(`${API_PREFIX}/users/${id}`, { method: "DELETE" }),
 
   // Dashboard
   getDashboardSummary: async (): Promise<DashboardSummary> => {
