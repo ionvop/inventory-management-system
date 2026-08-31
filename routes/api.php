@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\{
 use Illuminate\Support\Facades\Route;
 
 Route::get('/auth/users', [AuthController::class, 'users']);
+Route::post('/auth/users', [AuthController::class, 'store']);
 
 Route::middleware('resolve.user')->group(function () {
     Route::apiResource('users', UserController::class);
