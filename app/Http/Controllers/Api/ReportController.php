@@ -7,6 +7,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Illuminate\Database\Eloquent\Collection;
 
 class ReportController extends Controller
 {
@@ -43,7 +44,7 @@ class ReportController extends Controller
         };
     }
 
-    private function csv($items): StreamedResponse
+    private function csv(Collection $items): StreamedResponse
     {
         return response()->streamDownload(function () use ($items) {
             $out = fopen('php://output', 'w');
