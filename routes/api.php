@@ -1,17 +1,16 @@
 <?php
 // routes/api.php
 use App\Http\Controllers\Api\{
-    AuthController, UserController, ItemController,
+    UserController, ItemController,
     TransactionController, DashboardController, ReportController, SettingController
 };
 use Illuminate\Support\Facades\Route;
 
-Route::get('/auth/users', [AuthController::class, 'users']);
-Route::post('/auth/users', [AuthController::class, 'store']);
+// User management lives on the account-picker screen, so it is public
+// (users are just named profiles — there is no password auth).
+Route::apiResource('users', UserController::class);
 
 Route::middleware('resolve.user')->group(function () {
-    Route::apiResource('users', UserController::class);
-
     Route::get('items/low-stock', [ItemController::class, 'lowStock']);
     Route::apiResource('items', ItemController::class);
     Route::get('items/{item}/transactions', [TransactionController::class, 'byItem']);
