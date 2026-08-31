@@ -49,6 +49,7 @@ export default function Transactions() {
     mutationFn: api.createTransaction,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["items"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
       toast.success("Transaction recorded successfully");
       setFormOpen(false);
@@ -66,6 +67,7 @@ export default function Transactions() {
       api.updateTransaction(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["items"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
       toast.success("Transaction updated successfully");
       setFormOpen(false);
@@ -83,6 +85,7 @@ export default function Transactions() {
     mutationFn: api.deleteTransaction,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["items"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
       toast.success("Transaction deleted successfully");
       setDeleteTx(null);
