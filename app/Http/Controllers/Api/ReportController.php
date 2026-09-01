@@ -6,6 +6,8 @@ use App\Models\Item;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -15,7 +17,7 @@ class ReportController extends Controller
     {
         $dateFrom = $request->query('date_from');
         $dateTo = $request->query('date_to');
-        $format = $request->query('format', 'json');
+        $format = $request->query('format', 'excel');
 
         $items = Item::withStock()
             ->with(['transactions' => function ($q) use ($dateFrom, $dateTo) {
@@ -26,21 +28,14 @@ class ReportController extends Controller
             }])
             ->get();
 
-        $payload = [
-            'generated_time' => now()->toIso8601String(),
-            'date_from' => $dateFrom,
-            'date_to' => $dateTo,
-            'items' => $items,
-        ];
-
         return match ($format) {
             'csv' => $this->csv($items),
+            'excel' => $this->excel($items),
             'pdf' => Pdf::loadView('reports.inventory', [
                 'items' => $items,
                 'dateFrom' => $dateFrom,
                 'dateTo' => $dateTo,
             ])->download('inventory-report-'.now()->format('Y-m-d').'.pdf'),
-            default => $this->data($payload),
         };
     }
 
@@ -59,5 +54,39 @@ class ReportController extends Controller
             }
             fclose($out);
         }, 'inventory-report-'.now()->format('Y-m-d').'.csv');
+    }
+
+    private function excel(Collection $items): StreamedResponse
+    {
+        return response()->streamDownload(function () use ($items) {
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+
+            $headers = ['Item', 'Unit', 'Current Stock', 'Minimum Stock', 'Transaction Date', 'Movement', 'Quantity', 'User'];
+            $sheet->fromArray($headers, null, 'A1');
+
+            $row = 2;
+            foreach ($items as $item) {
+                if ($item->transactions->isEmpty()) {
+                    $sheet->fromArray([
+                        $item->name, $item->unit, $item->current_stock, $item->minimum_stock, '', '', '', '',
+                    ], null, 'A'.$row);
+                    $row++;
+                }
+                foreach ($item->transactions as $t) {
+                    $sheet->fromArray([
+                        $item->name, $item->unit, $item->current_stock, $item->minimum_stock,
+                        $t->posted_at->format('Y-m-d H:i'), $t->movement, $t->quantity, $t->user->username,
+                    ], null, 'A'.$row);
+                    $row++;
+                }
+            }
+
+            $writer = new Xlsx($spreadsheet);
+            $writer->save('php://output');
+            $spreadsheet->disconnectWorksheets();
+        }, 'inventory-report-'.now()->format('Y-m-d').'.xlsx', [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
     }
 }
