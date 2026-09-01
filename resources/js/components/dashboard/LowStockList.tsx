@@ -1,5 +1,6 @@
 import { AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { withUnit } from "@/lib/utils";
 import type { Item } from "@/types";
 
 interface LowStockListProps {
@@ -41,13 +42,13 @@ export default function LowStockList({ items }: LowStockListProps) {
             </div>
             <div className="flex items-center gap-3 flex-shrink-0">
               <span className="text-sm font-semibold text-amber-600 dark:text-amber-400 tabular-nums">
-                {item.current_stock}
+                {withUnit(item.current_stock, item.unit)}
               </span>
               <Badge
                 variant="outline"
                 className="text-xs border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30"
               >
-                Min: {item.minimum_stock}
+                Min: {withUnit(item.minimum_stock, item.unit)}
               </Badge>
             </div>
           </div>
