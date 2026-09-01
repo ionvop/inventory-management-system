@@ -22,7 +22,47 @@ class TransactionController extends Controller
             ->when($request->query('date_to'), fn ($q, $v) => $q->where('posted_at', '<=', Carbon::parse($v)->endOfDay()))
             ->orderBy($request->query('sort', 'posted_at'), $request->query('order', 'desc'));
 
-        return $this->paginated($query->paginate($request->query('limit', 25)));
+        $transactions = $query->paginate($request->query('limit', 25));
+        $this->attachStockAfter($transactions->items());
+
+        return $this->paginated($transactions);
+    }
+
+    /**
+     * Attach a per-item running balance ("stock_after") to each transaction
+     * on the current page. Computed from the FULL history of each item on the
+     * page (ordered by posted_at, then id) so pagination and movement/date
+     * filters don't skew the resulting stock.
+     */
+    private function attachStockAfter(array $transactions): void
+    {
+        $itemIds = collect($transactions)
+            ->pluck('item_id')
+            ->unique()
+            ->values();
+
+        if ($itemIds->isEmpty()) {
+            return;
+        }
+
+        $history = Transaction::whereIn('item_id', $itemIds)
+            ->orderBy('item_id')
+            ->orderBy('posted_at')
+            ->orderBy('id')
+            ->get(['id', 'item_id', 'movement', 'quantity']);
+
+        $running = [];
+        $stockAfterById = [];
+
+        foreach ($history as $tx) {
+            $delta = $tx->movement === 'in' ? $tx->quantity : -$tx->quantity;
+            $running[$tx->item_id] = ($running[$tx->item_id] ?? 0) + $delta;
+            $stockAfterById[$tx->item_id][$tx->id] = $running[$tx->item_id];
+        }
+
+        foreach ($transactions as $tx) {
+            $tx->stock_after = $stockAfterById[$tx->item_id][$tx->id] ?? null;
+        }
     }
 
     public function byItem(Request $request, Item $item)
