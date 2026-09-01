@@ -59,3 +59,25 @@ it('includes recent transactions', function () {
         ->assertJsonCount(1, 'data.recent_transactions')
         ->assertJsonPath('data.recent_transactions.0.quantity', 5);
 });
+
+it('uses the X-Timezone header to determine today boundaries', function () {
+    actingAsUser();
+    $item = Item::factory()->create();
+    // 01:00 UTC today == 21:00 yesterday in America/New_York (EDT, UTC-4).
+    Transaction::factory()->create([
+        'item_id' => $item->id,
+        'movement' => 'in',
+        'posted_at' => now()->startOfDay()->addHours(1),
+    ]);
+
+    // With UTC, this transaction is today.
+    $this->getJson('/api/dashboard/summary')
+        ->assertOk()
+        ->assertJsonPath('data.today_transactions.in_count', 1);
+
+    // With America/New_York, it falls on the previous day.
+    $this->withHeader('X-Timezone', 'America/New_York')
+        ->getJson('/api/dashboard/summary')
+        ->assertOk()
+        ->assertJsonPath('data.today_transactions.in_count', 0);
+});
