@@ -4,17 +4,36 @@ use App\Models\Item;
 use App\Models\Transaction;
 use App\Models\User;
 
-it('returns the inventory report as json by default', function () {
+it('returns the inventory report as excel by default', function () {
     actingAsUser();
     $item = Item::factory()->create(['name' => 'Sugar']);
     Transaction::factory()->create(['item_id' => $item->id, 'movement' => 'in', 'quantity' => 5]);
 
-    $this->getJson('/api/reports/inventory')
+    $this->get('/api/reports/inventory')
         ->assertOk()
-        ->assertJsonStructure([
-            'data' => ['generated_time', 'date_from', 'date_to', 'items'],
-        ])
-        ->assertJsonPath('data.items.0.name', 'Sugar');
+        ->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+});
+
+it('returns the inventory report as excel', function () {
+    actingAsUser();
+    $item = Item::factory()->create(['name' => 'Sugar', 'unit' => 'kg']);
+    Transaction::factory()->create(['item_id' => $item->id, 'movement' => 'in', 'quantity' => 5]);
+
+    $response = $this->get('/api/reports/inventory?format=excel');
+
+    $response->assertOk();
+    $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+
+    // An .xlsx is a ZIP archive; verify it is a valid zip and contains the sheet XML.
+    $content = $response->streamedContent();
+    $zip = new ZipArchive();
+    $tmp = tempnam(sys_get_temp_dir(), 'xlsx');
+    file_put_contents($tmp, $content);
+    $opened = $zip->open($tmp);
+    expect($opened)->toBeTrue();
+    expect($zip->getFromName('xl/sharedStrings.xml'))->toContain('Sugar');
+    $zip->close();
+    @unlink($tmp);
 });
 
 it('returns the inventory report as csv', function () {
@@ -52,7 +71,12 @@ it('filters the report by date range', function () {
     Transaction::factory()->create(['item_id' => $item->id, 'movement' => 'in', 'quantity' => 5, 'posted_at' => now()->subDays(10)]);
     Transaction::factory()->create(['item_id' => $item->id, 'movement' => 'in', 'quantity' => 3, 'posted_at' => now()]);
 
-    $this->getJson('/api/reports/inventory?date_from='.now()->subDays(2)->format('Y-m-d'))
-        ->assertOk()
-        ->assertJsonCount(1, 'data.items.0.transactions');
+    $response = $this->get('/api/reports/inventory?format=csv&date_from='.now()->subDays(2)->format('Y-m-d'));
+
+    $response->assertOk();
+    $rows = array_map('str_getcsv', array_filter(explode("\n", trim($response->streamedContent()))));
+
+    // Header + 1 filtered transaction row.
+    expect($rows)->toHaveCount(2);
+    expect($rows[1][6])->toBe('3');
 });
