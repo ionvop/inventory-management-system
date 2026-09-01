@@ -5,7 +5,6 @@ import type {
   PaginatedResponse,
   ApiError,
   DashboardSummary,
-  Report,
   CreateItemRequest,
   UpdateItemRequest,
   CreateTransactionRequest,
@@ -169,18 +168,6 @@ export const api = {
 
   deleteTransaction: (id: number) =>
     request<void>(`${API_PREFIX}/transactions/${id}`, { method: "DELETE" }),
-
-  // Reports
-  getReport: async (params: {
-    date_from?: string;
-    date_to?: string;
-    format: "json" | "csv" | "pdf";
-  }): Promise<Report> => {
-    const res = await request<{ data: Report }>(
-      `${API_PREFIX}/reports/inventory${buildQueryString(params as Record<string, unknown>)}`
-    );
-    return res.data;
-  },
 
   // Settings
   getSettings: async (): Promise<Record<string, string>> => {
