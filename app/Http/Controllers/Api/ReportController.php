@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Item;
-use App\Models\Setting;
 use App\Models\Transaction;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -20,7 +19,7 @@ class ReportController extends Controller
         $dateFrom = $request->query('date_from');
         $dateTo = $request->query('date_to');
         $format = $request->query('format', 'excel');
-        $timezone = Setting::get('timezone', config('app.timezone'));
+        $timezone = $this->resolveTimezone($request);
 
         $items = Item::withStock()
             ->with(['transactions' => function ($q) use ($dateFrom, $dateTo, $timezone) {
