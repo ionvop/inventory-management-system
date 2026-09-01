@@ -14,7 +14,7 @@ class TransactionController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Transaction::with(['item:id,name', 'user:id,username'])
+        $query = Transaction::with(['item:id,name,unit', 'user:id,username'])
             ->when($request->query('item_id'), fn ($q, $v) => $q->where('item_id', $v))
             ->when($request->query('user_id'), fn ($q, $v) => $q->where('user_id', $v))
             ->when($request->query('movement'), fn ($q, $v) => $q->where('movement', $v))
@@ -89,12 +89,12 @@ class TransactionController extends Controller
             'posted_at' => $validated['posted_at'] ?? now(),
         ]);
 
-        return $this->data($transaction->load(['item:id,name', 'user:id,username']), 201);
+        return $this->data($transaction->load(['item:id,name,unit', 'user:id,username']), 201);
     }
 
     public function show(Transaction $transaction)
     {
-        return $this->data($transaction->load(['item:id,name', 'user:id,username']));
+        return $this->data($transaction->load(['item:id,name,unit', 'user:id,username']));
     }
 
     public function update(UpdateTransactionRequest $request, Transaction $transaction)
@@ -115,7 +115,7 @@ class TransactionController extends Controller
         }
 
         $transaction->update($validated);
-        return $this->data($transaction->fresh(['item:id,name', 'user:id,username']));
+        return $this->data($transaction->fresh(['item:id,name,unit', 'user:id,username']));
     }
 
     public function destroy(Transaction $transaction)
