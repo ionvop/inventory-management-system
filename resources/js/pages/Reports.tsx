@@ -1,4 +1,5 @@
 import { toast } from "sonner";
+import { getTimezone } from "@/lib/api";
 import ReportGenerator from "@/components/reports/ReportGenerator";
 
 export default function Reports() {
@@ -31,6 +32,7 @@ export default function Reports() {
       headers: {
         Accept: "application/json",
         "X-User-Id": userIdHeader,
+        "X-Timezone": getTimezone(),
       },
     })
       .then((res) => {
