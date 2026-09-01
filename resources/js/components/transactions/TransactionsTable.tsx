@@ -2,6 +2,7 @@ import { Pencil, Trash2, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
+import { withUnit } from "@/lib/utils";
 import type { Transaction } from "@/types";
 
 function formatDateTime(timestamp: string | undefined): string {
@@ -88,11 +89,11 @@ export default function TransactionsTable({
                     }
                   >
                     {tx.movement === "in" ? "+" : "−"}
-                    {tx.quantity}
+                    {withUnit(tx.quantity, tx.item?.unit)}
                   </span>
                 </td>
                 <td className="px-4 py-3 text-sm text-right font-semibold tabular-nums text-gray-700 dark:text-gray-300">
-                  {tx.stock_after ?? "—"}
+                  {tx.stock_after != null ? withUnit(tx.stock_after, tx.item?.unit) : "—"}
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                   {tx.user?.username ?? `User #${tx.user_id}`}
@@ -187,13 +188,13 @@ export default function TransactionsTable({
                 }`}
               >
                 {tx.movement === "in" ? "+" : "−"}
-                {tx.quantity}
+                {withUnit(tx.quantity, tx.item?.unit)}
               </span>
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
               Stock after:{" "}
               <span className="font-semibold tabular-nums text-gray-700 dark:text-gray-300">
-                {tx.stock_after ?? "—"}
+                {tx.stock_after != null ? withUnit(tx.stock_after, tx.item?.unit) : "—"}
               </span>
             </p>
           </div>
