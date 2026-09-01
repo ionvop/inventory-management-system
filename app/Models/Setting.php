@@ -13,4 +13,12 @@ class Setting extends Model
     public $incrementing = false;
     protected $keyType = 'string';
     protected $fillable = ['key', 'value'];
+
+    /**
+     * Get a setting value by key, falling back to a default when unset.
+     */
+    public static function get(string $key, mixed $default = null): mixed
+    {
+        return static::where('key', $key)->value('value') ?? $default;
+    }
 }
