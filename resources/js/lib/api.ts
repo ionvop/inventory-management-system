@@ -9,7 +9,6 @@ import type {
   UpdateItemRequest,
   CreateTransactionRequest,
   UpdateTransactionRequest,
-  UpdateSettingsRequest,
   ItemFilters,
   TransactionFilters,
 } from "@/types";
@@ -184,18 +183,6 @@ export const api = {
 
   deleteTransaction: (id: number) =>
     request<void>(`${API_PREFIX}/transactions/${id}`, { method: "DELETE" }),
-
-  // Settings
-  getSettings: async (): Promise<Record<string, string>> => {
-    const res = await request<{ data: Record<string, string> }>(`${API_PREFIX}/settings`);
-    return res.data;
-  },
-
-  updateSettings: (data: UpdateSettingsRequest) =>
-    request<{ data: Record<string, string> }>(`${API_PREFIX}/settings`, {
-      method: "PUT",
-      body: JSON.stringify(data.settings),
-    }),
 };
 
 export { ApiClientError };
