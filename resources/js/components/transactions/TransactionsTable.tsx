@@ -38,6 +38,9 @@ export default function TransactionsTable({
               <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Qty
               </th>
+              <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Stock After
+              </th>
               <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 User
               </th>
@@ -87,6 +90,9 @@ export default function TransactionsTable({
                     {tx.movement === "in" ? "+" : "−"}
                     {tx.quantity}
                   </span>
+                </td>
+                <td className="px-4 py-3 text-sm text-right font-semibold tabular-nums text-gray-700 dark:text-gray-300">
+                  {tx.stock_after ?? "—"}
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                   {tx.user?.username ?? `User #${tx.user_id}`}
@@ -184,6 +190,12 @@ export default function TransactionsTable({
                 {tx.quantity}
               </span>
             </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              Stock after:{" "}
+              <span className="font-semibold tabular-nums text-gray-700 dark:text-gray-300">
+                {tx.stock_after ?? "—"}
+              </span>
+            </p>
           </div>
         ))}
       </div>
