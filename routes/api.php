@@ -2,7 +2,7 @@
 // routes/api.php
 use App\Http\Controllers\Api\{
     UserController, ItemController,
-    TransactionController, DashboardController, ReportController, SettingController
+    TransactionController, DashboardController, ReportController
 };
 use Illuminate\Support\Facades\Route;
 
@@ -21,7 +21,4 @@ Route::middleware('resolve.user')->group(function () {
 
     Route::get('dashboard/summary', [DashboardController::class, 'summary']);
     Route::get('reports/inventory', [ReportController::class, 'inventory']);
-
-    Route::get('settings', [SettingController::class, 'index']);
-    Route::put('settings', [SettingController::class, 'update']);
 });
