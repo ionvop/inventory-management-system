@@ -22,6 +22,20 @@ export function setUserIdGetter(fn: () => number | null) {
   getUserId = fn;
 }
 
+/**
+ * The browser's IANA timezone identifier, sent to the backend on each
+ * request so report rendering and dashboard "today" calculations match the
+ * viewer's local wall clock.
+ */
+export function getTimezone(): string {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return tz || "UTC";
+  } catch {
+    return "UTC";
+  }
+}
+
 class ApiClientError extends Error {
   status: number;
   errors?: Record<string, string[]>;
@@ -48,6 +62,8 @@ async function request<T>(
   if (userId !== null && userId !== undefined) {
     headers["X-User-Id"] = String(userId);
   }
+
+  headers["X-Timezone"] = getTimezone();
 
   const response = await fetch(endpoint, {
     ...options,
