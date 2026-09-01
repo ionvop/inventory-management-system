@@ -1,5 +1,6 @@
 import { ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
 import { format } from "date-fns";
+import { withUnit } from "@/lib/utils";
 import type { Transaction } from "@/types";
 
 interface RecentTransactionsProps {
@@ -68,7 +69,7 @@ export default function RecentTransactions({
                 }`}
               >
                 {tx.movement === "in" ? "+" : "-"}
-                {tx.quantity}
+                {withUnit(tx.quantity, tx.item?.unit)}
               </span>
             </div>
           </div>
