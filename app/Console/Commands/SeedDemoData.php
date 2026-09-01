@@ -152,10 +152,12 @@ class SeedDemoData extends Command
             for ($i = 0; $i < $itemCount; $i++) {
                 // Weighted random day: bias toward the present, but still
                 // spread across the full history so date filters return
-                // meaningful subsets for any range.
+                // meaningful subsets for any range. Today is excluded so no
+                // transaction is ever stamped "now" (or accidentally in the
+                // future), keeping every seeded timestamp strictly in the past.
 
                 $weight = mt_rand(0, 1000) / 1000;
-                $dayOffset = (int) round(pow($weight, 2) * self::HISTORY_DAYS);
+                $dayOffset = max(1, (int) round(pow($weight, 2) * self::HISTORY_DAYS));
                 $postedAt = $now->copy()->subDays($dayOffset)->setTime(
                     mt_rand(0, 23),
                     mt_rand(0, 59),
