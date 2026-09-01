@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -94,6 +94,49 @@ export default function TransactionForm({
       }
     }
   }, [open, transaction, form]);
+
+  const watchedItemId = form.watch("item_id");
+  const watchedQuantity = form.watch("quantity");
+
+  const selectedItem = useMemo(
+    () => itemsData?.data.find((item) => item.id === watchedItemId) ?? null,
+    [itemsData, watchedItemId]
+  );
+
+  const stockPreview = useMemo(() => {
+    if (!selectedItem) return null;
+
+    // In edit mode, back out the transaction's own effect so the preview
+    // reflects the stock level before this transaction is applied.
+    const baseStock = transaction
+      ? selectedItem.current_stock -
+        (transaction.movement === "in"
+          ? transaction.quantity
+          : -transaction.quantity)
+      : selectedItem.current_stock;
+
+    const quantity = Number(watchedQuantity);
+    if (!Number.isFinite(quantity) || quantity <= 0) return null;
+
+    const delta = movementType === "in" ? quantity : -quantity;
+    const projectedStock = baseStock + delta;
+
+    return {
+      currentStock: selectedItem.current_stock,
+      baseStock,
+      projectedStock,
+      delta,
+    };
+  }, [selectedItem, transaction, watchedQuantity, movementType]);
+
+  const isInsufficientStock =
+    stockPreview !== null &&
+    movementType === "out" &&
+    stockPreview.projectedStock < 0;
+
+  const isLowStock =
+    stockPreview !== null &&
+    stockPreview.projectedStock < selectedItem!.minimum_stock;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -198,6 +241,62 @@ export default function TransactionForm({
                 </FormItem>
               )}
             />
+
+            {stockPreview && (
+              <div className="rounded-lg border border-border bg-muted/50 p-3 space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">
+                    {transaction ? "Stock before" : "Current stock"}
+                  </span>
+                  <span className="font-medium tabular-nums">
+                    {stockPreview.baseStock} {selectedItem?.unit}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">
+                    {movementType === "in" ? "Stock in (+)" : "Stock out (−)"}
+                  </span>
+                  <span className="font-medium tabular-nums">
+                    {movementType === "in" ? "+" : "−"}
+                    {stockPreview.delta} {selectedItem?.unit}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm border-t border-border pt-2">
+                  <span className="font-medium">Resulting stock</span>
+                  <span
+                    className={`font-semibold tabular-nums ${
+                      isInsufficientStock
+                        ? "text-red-600 dark:text-red-400"
+                        : isLowStock
+                        ? "text-amber-600 dark:text-amber-400"
+                        : "text-foreground"
+                    }`}
+                  >
+                    {stockPreview.projectedStock} {selectedItem?.unit}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {isInsufficientStock && (
+              <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/20 p-3 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                <p className="text-sm text-red-600 dark:text-red-400">
+                  Not enough stock for this transaction. Current stock is{" "}
+                  {stockPreview?.baseStock} {selectedItem?.unit}.
+                </p>
+              </div>
+            )}
+
+            {isLowStock && !isInsufficientStock && (
+              <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20 p-3 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                <p className="text-sm text-amber-600 dark:text-amber-400">
+                  Resulting stock will be below the minimum of{" "}
+                  {selectedItem?.minimum_stock} {selectedItem?.unit}.
+                </p>
+              </div>
+            )}
 
             <div className="flex justify-end gap-3 pt-2">
               <Button
