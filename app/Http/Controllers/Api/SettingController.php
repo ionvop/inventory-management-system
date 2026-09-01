@@ -2,8 +2,8 @@
 // app/Http/Controllers/Api/SettingController.php
 namespace App\Http\Controllers\Api;
 
+use App\Http\Requests\UpdateSettingsRequest;
 use App\Models\Setting;
-use Illuminate\Http\Request;
 
 class SettingController extends Controller
 {
@@ -12,7 +12,7 @@ class SettingController extends Controller
         return $this->data(Setting::pluck('value', 'key'));
     }
 
-    public function update(Request $request)
+    public function update(UpdateSettingsRequest $request)
     {
         foreach ($request->all() as $key => $value) {
             Setting::updateOrCreate(['key' => $key], ['value' => $value]);
