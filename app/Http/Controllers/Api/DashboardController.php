@@ -23,7 +23,7 @@ class DashboardController extends Controller
                 'in_count' => Transaction::whereBetween('posted_at', [$todayStart, $todayEnd])->where('movement', 'in')->count(),
                 'out_count' => Transaction::whereBetween('posted_at', [$todayStart, $todayEnd])->where('movement', 'out')->count(),
             ],
-            'recent_transactions' => Transaction::with(['item:id,name', 'user:id,username'])
+            'recent_transactions' => Transaction::with(['item:id,name,unit', 'user:id,username'])
                 ->orderByDesc('created_at')->take(10)->get(),
         ]);
     }
