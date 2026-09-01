@@ -4,16 +4,19 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Item;
 use App\Models\Transaction;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-    public function summary()
+    public function summary(Request $request)
     {
         $items = Item::withStock()->get();
         $lowStock = $items->filter(fn ($i) => $i->is_low_stock)->values();
 
-        $todayStart = now()->startOfDay();
-        $todayEnd = now()->endOfDay();
+        $timezone = $this->resolveTimezone($request);
+        $todayStart = Carbon::parse('today', $timezone)->startOfDay()->utc();
+        $todayEnd = Carbon::parse('today', $timezone)->endOfDay()->utc();
 
         return $this->data([
             'total_items' => $items->count(),
