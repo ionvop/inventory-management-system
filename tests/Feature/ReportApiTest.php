@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Item;
+use App\Models\Setting;
 use App\Models\Transaction;
 use App\Models\User;
 
@@ -79,4 +80,38 @@ it('filters the report by date range', function () {
     // Header + 1 filtered transaction row.
     expect($rows)->toHaveCount(2);
     expect($rows[1][6])->toBe('3');
+});
+
+it('respects the timezone setting when filtering the report by date', function () {
+    actingAsUser();
+    Setting::factory()->create(['key' => 'timezone', 'value' => 'America/New_York']);
+
+    $item = Item::factory()->create(['name' => 'Sugar']);
+
+    // 2026-09-01 04:30 UTC == 2026-09-01 00:30 America/New_York (EDT, UTC-4).
+    // This transaction is on Sept 1 in the configured timezone.
+    Transaction::factory()->create([
+        'item_id' => $item->id,
+        'movement' => 'in',
+        'quantity' => 5,
+        'posted_at' => '2026-09-01 04:30:00',
+    ]);
+
+    // 2026-09-01 03:30 UTC == 2026-08-31 23:30 America/New_York.
+    // This transaction is still Aug 31 in the configured timezone.
+    Transaction::factory()->create([
+        'item_id' => $item->id,
+        'movement' => 'in',
+        'quantity' => 3,
+        'posted_at' => '2026-09-01 03:30:00',
+    ]);
+
+    $response = $this->get('/api/reports/inventory?format=csv&date_from=2026-09-01&date_to=2026-09-01');
+
+    $response->assertOk();
+    $rows = array_map('str_getcsv', array_filter(explode("\n", trim($response->streamedContent()))));
+
+    // Header + only the transaction that falls on Sept 1 in America/New_York.
+    expect($rows)->toHaveCount(2);
+    expect($rows[1][6])->toBe('5');
 });
