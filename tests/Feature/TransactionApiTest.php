@@ -71,6 +71,28 @@ it('lists transactions for a specific item', function () {
         ->assertJsonPath('pagination.total', 1);
 });
 
+it('reports the resulting stock after each transaction', function () {
+    actingAsUser();
+    $item = Item::factory()->create();
+    $other = Item::factory()->create();
+
+    // Item history: in 10, out 4, in 3 -> running balance 10, 6, 9.
+    $in1 = Transaction::factory()->create(['item_id' => $item->id, 'movement' => 'in', 'quantity' => 10, 'posted_at' => now()->subDays(3)]);
+    $out = Transaction::factory()->create(['item_id' => $item->id, 'movement' => 'out', 'quantity' => 4, 'posted_at' => now()->subDays(2)]);
+    $in2 = Transaction::factory()->create(['item_id' => $item->id, 'movement' => 'in', 'quantity' => 3, 'posted_at' => now()->subDays(1)]);
+    // Unrelated item must not affect the balance.
+    Transaction::factory()->create(['item_id' => $other->id, 'movement' => 'in', 'quantity' => 99]);
+
+    $this->getJson('/api/transactions?item_id='.$item->id.'&sort=posted_at&order=asc')
+        ->assertOk()
+        ->assertJsonPath('data.0.id', $in1->id)
+        ->assertJsonPath('data.0.stock_after', 10)
+        ->assertJsonPath('data.1.id', $out->id)
+        ->assertJsonPath('data.1.stock_after', 6)
+        ->assertJsonPath('data.2.id', $in2->id)
+        ->assertJsonPath('data.2.stock_after', 9);
+});
+
 it('creates an in transaction and assigns the current user', function () {
     $user = actingAsUser();
     $item = Item::factory()->create();
