@@ -34,14 +34,6 @@ export interface Transaction {
   posted_at: string;
 }
 
-export interface Setting {
-  id: number;
-  key: string;
-  value: string;
-  created_at: string;
-  updated_at: string;
-}
-
 // ============ API Response Types ============
 
 export interface PaginatedResponse<T> {
@@ -113,10 +105,6 @@ export interface UpdateTransactionRequest {
   movement?: MovementType;
   quantity?: number;
   posted_at?: string;
-}
-
-export interface UpdateSettingsRequest {
-  settings: Record<string, string>;
 }
 
 export interface ReportRequest {
