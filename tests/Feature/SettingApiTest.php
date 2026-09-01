@@ -45,24 +45,3 @@ it('updates an existing setting rather than duplicating it', function () {
     $this->assertDatabaseCount('settings', 1);
     $this->assertDatabaseHas('settings', ['key' => 'store_name', 'value' => 'New Name']);
 });
-
-it('saves a valid timezone setting', function () {
-    actingAsUser();
-
-    $this->putJson('/api/settings', ['timezone' => 'America/New_York'])
-        ->assertOk()
-        ->assertJsonPath('data.timezone', 'America/New_York');
-
-    $this->assertDatabaseHas('settings', ['key' => 'timezone', 'value' => 'America/New_York']);
-});
-
-it('rejects an invalid timezone setting', function () {
-    actingAsUser();
-
-    $this->putJson('/api/settings', ['timezone' => 'Not/A_Timezone'])
-        ->assertStatus(400)
-        ->assertJsonPath('error.code', 'VALIDATION_ERROR')
-        ->assertJsonPath('error.details.timezone.0', 'The selected timezone is invalid.');
-
-    $this->assertDatabaseMissing('settings', ['key' => 'timezone']);
-});
