@@ -12,6 +12,8 @@ import {
 import { Save, Loader2 } from "lucide-react";
 import { TIMEZONES } from "@/lib/timezones";
 
+const DEFAULT_TIMEZONE = "UTC";
+
 interface SettingsFormProps {
   settings: Record<string, string>;
   onSave: (settings: Record<string, string>) => void;
@@ -26,7 +28,7 @@ export default function SettingsForm({
   const [values, setValues] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    setValues({ ...settings });
+    setValues({ ...settings, timezone: settings.timezone || DEFAULT_TIMEZONE });
   }, [settings]);
 
   const handleChange = (key: string, value: string) => {
@@ -38,17 +40,9 @@ export default function SettingsForm({
     onSave(values);
   };
 
-  const entries = Object.entries(values);
-
-  if (entries.length === 0) {
-    return (
-      <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-8 text-center">
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          No settings available
-        </p>
-      </div>
-    );
-  }
+  // The timezone field is always shown (defaulting to UTC when unset); all
+  // other settings render dynamically from the stored key-value map.
+  const otherEntries = Object.entries(values).filter(([key]) => key !== "timezone");
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -59,34 +53,40 @@ export default function SettingsForm({
           </h3>
         </div>
         <div className="p-4 space-y-4">
-          {entries.map(([key, value]) => (
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 capitalize">
+              Timezone
+            </Label>
+            <Select
+              value={values.timezone || DEFAULT_TIMEZONE}
+              onValueChange={(v) => handleChange("timezone", v)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a timezone" />
+              </SelectTrigger>
+              <SelectContent>
+                {TIMEZONES.map((tz) => (
+                  <SelectItem key={tz} value={tz}>
+                    {tz}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-[11px] text-gray-400 dark:text-gray-500">
+              Used when building reports in the backend
+            </p>
+          </div>
+
+          {otherEntries.map(([key, value]) => (
             <div key={key} className="space-y-1.5">
               <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 capitalize">
                 {key.replace(/_/g, " ")}
               </Label>
-              {key === "timezone" ? (
-                <Select
-                  value={value}
-                  onValueChange={(v) => handleChange(key, v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a timezone" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TIMEZONES.map((tz) => (
-                      <SelectItem key={tz} value={tz}>
-                        {tz}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <Input
-                  value={value}
-                  onChange={(e) => handleChange(key, e.target.value)}
-                  placeholder={`Enter ${key.replace(/_/g, " ")}`}
-                />
-              )}
+              <Input
+                value={value}
+                onChange={(e) => handleChange(key, e.target.value)}
+                placeholder={`Enter ${key.replace(/_/g, " ")}`}
+              />
               <p className="text-[11px] text-gray-400 dark:text-gray-500">
                 Key: {key}
               </p>
