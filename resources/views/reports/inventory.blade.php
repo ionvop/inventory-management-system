@@ -69,7 +69,7 @@
     <div class="header">
         <h1>Inventory Report</h1>
         <div class="meta">
-            <span>Generated: {{ now()->format('Y-m-d H:i') }}</span>
+            <span>Generated: {{ now()->timezone($timezone)->format('Y-m-d H:i') }}</span>
             @if (!empty($dateFrom) || !empty($dateTo))
                 <span>Period: {{ $dateFrom ?? 'Beginning' }} &rarr; {{ $dateTo ?? 'Now' }}</span>
             @endif
@@ -112,7 +112,7 @@
                                 <td>{{ $item->unit }}</td>
                                 <td class="text-right">{{ $item->current_stock }}</td>
                                 <td class="text-right">{{ $item->minimum_stock }}</td>
-                                <td>{{ $t->posted_at->format('Y-m-d H:i') }}</td>
+                                <td>{{ $t->posted_at->timezone($timezone)->format('Y-m-d H:i') }}</td>
                                 <td class="movement-{{ $t->movement }}">{{ ucfirst($t->movement) }}</td>
                                 <td class="text-right">{{ $t->quantity }}</td>
                                 <td>{{ $t->user->username }}</td>
@@ -125,7 +125,7 @@
     @endif
 
     <div class="footer">
-        Inventory Report &mdash; {{ now()->format('Y-m-d H:i') }}
+        Inventory Report &mdash; {{ now()->timezone($timezone)->format('Y-m-d H:i') }}
     </div>
 </body>
 </html>
