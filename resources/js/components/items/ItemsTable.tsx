@@ -1,6 +1,7 @@
 import { Pencil, Trash2, AlertTriangle, ArrowUpDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { withUnit } from "@/lib/utils";
 import type { Item } from "@/types";
 
 interface ItemsTableProps {
@@ -89,10 +90,10 @@ export default function ItemsTable({
                     {item.unit}
                   </td>
                   <td className="px-4 py-3 text-sm text-right font-semibold text-gray-900 dark:text-white tabular-nums">
-                    {item.current_stock}
+                    {withUnit(item.current_stock, item.unit)}
                   </td>
                   <td className="px-4 py-3 text-sm text-right text-gray-600 dark:text-gray-400 tabular-nums">
-                    {item.minimum_stock}
+                    {withUnit(item.minimum_stock, item.unit)}
                   </td>
                   <td className="px-4 py-3 text-center">
                     {isLowStock ? (
@@ -180,7 +181,7 @@ export default function ItemsTable({
               <div className="flex items-center gap-4 mt-3">
                 <div>
                   <p className="text-lg font-bold text-gray-900 dark:text-white tabular-nums">
-                    {item.current_stock}
+                    {withUnit(item.current_stock, item.unit)}
                   </p>
                   <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase">
                     Stock
@@ -189,7 +190,7 @@ export default function ItemsTable({
                 <div className="w-px h-6 bg-gray-200 dark:bg-gray-700" />
                 <div>
                   <p className="text-sm font-semibold text-gray-600 dark:text-gray-400 tabular-nums">
-                    {item.minimum_stock}
+                    {withUnit(item.minimum_stock, item.unit)}
                   </p>
                   <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase">
                     Min
