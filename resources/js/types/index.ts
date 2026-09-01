@@ -76,7 +76,7 @@ export interface DashboardSummary {
 
 export interface Report {
   generated_time: string;
-  format: "json" | "csv" | "pdf";
+  format: "csv" | "pdf" | "excel";
   date_from?: string;
   date_to?: string;
   items: ReportItem[];
@@ -122,7 +122,7 @@ export interface UpdateSettingsRequest {
 export interface ReportRequest {
   date_from?: string;
   date_to?: string;
-  format: "json" | "csv" | "pdf";
+  format: "csv" | "pdf" | "excel";
 }
 
 // ============ Query Params ============
