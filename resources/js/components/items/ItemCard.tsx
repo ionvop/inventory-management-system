@@ -1,6 +1,7 @@
 import { Pencil, Trash2, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { withUnit } from "@/lib/utils";
 import type { Item } from "@/types";
 
 interface ItemCardProps {
@@ -50,7 +51,7 @@ export default function ItemCard({ item, onEdit, onDelete }: ItemCardProps) {
       <div className="flex items-center gap-3 mt-3">
         <div>
           <p className="text-2xl font-bold text-gray-900 dark:text-white tabular-nums">
-            {item.current_stock}
+            {withUnit(item.current_stock, item.unit)}
           </p>
           <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">
             Current
@@ -59,7 +60,7 @@ export default function ItemCard({ item, onEdit, onDelete }: ItemCardProps) {
         <div className="w-px h-8 bg-gray-200 dark:bg-gray-700" />
         <div>
           <p className="text-lg font-semibold text-gray-600 dark:text-gray-400 tabular-nums">
-            {item.minimum_stock}
+            {withUnit(item.minimum_stock, item.unit)}
           </p>
           <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">
             Minimum
