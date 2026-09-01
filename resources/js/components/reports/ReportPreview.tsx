@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { withUnit } from "@/lib/utils";
 import type { Report } from "@/types";
 
 interface ReportPreviewProps {
@@ -68,10 +69,10 @@ export default function ReportPreview({ report }: ReportPreviewProps) {
                   {row.unit}
                 </td>
                 <td className="px-4 py-3 text-sm text-right font-semibold text-gray-900 dark:text-white tabular-nums">
-                  {row.current_stock}
+                  {withUnit(row.current_stock, row.unit)}
                 </td>
                 <td className="px-4 py-3 text-sm text-right text-gray-600 dark:text-gray-400 tabular-nums">
-                  {row.minimum_stock}
+                  {withUnit(row.minimum_stock, row.unit)}
                 </td>
                 <td className="px-4 py-3 text-center">
                   <Badge
