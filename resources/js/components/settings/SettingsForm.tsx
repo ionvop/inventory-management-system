@@ -2,7 +2,15 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Save, Loader2 } from "lucide-react";
+import { TIMEZONES } from "@/lib/timezones";
 
 interface SettingsFormProps {
   settings: Record<string, string>;
@@ -56,11 +64,29 @@ export default function SettingsForm({
               <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 capitalize">
                 {key.replace(/_/g, " ")}
               </Label>
-              <Input
-                value={value}
-                onChange={(e) => handleChange(key, e.target.value)}
-                placeholder={`Enter ${key.replace(/_/g, " ")}`}
-              />
+              {key === "timezone" ? (
+                <Select
+                  value={value}
+                  onValueChange={(v) => handleChange(key, v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a timezone" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TIMEZONES.map((tz) => (
+                      <SelectItem key={tz} value={tz}>
+                        {tz}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  value={value}
+                  onChange={(e) => handleChange(key, e.target.value)}
+                  placeholder={`Enter ${key.replace(/_/g, " ")}`}
+                />
+              )}
               <p className="text-[11px] text-gray-400 dark:text-gray-500">
                 Key: {key}
               </p>
