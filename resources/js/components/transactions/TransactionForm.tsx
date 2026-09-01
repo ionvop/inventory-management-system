@@ -258,7 +258,7 @@ export default function TransactionForm({
                   </span>
                   <span className="font-medium tabular-nums">
                     {movementType === "in" ? "+" : "−"}
-                    {stockPreview.delta} {selectedItem?.unit}
+                    {Math.abs(stockPreview.delta)} {selectedItem?.unit}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm border-t border-border pt-2">
