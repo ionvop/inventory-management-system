@@ -2,10 +2,8 @@
 
 namespace App\Http\Requests;
 
-use DateTimeZone;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class UpdateSettingsRequest extends FormRequest
 {
@@ -24,8 +22,6 @@ class UpdateSettingsRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'timezone' => ['nullable', 'string', Rule::in(DateTimeZone::listIdentifiers())],
-        ];
+        return [];
     }
 }
