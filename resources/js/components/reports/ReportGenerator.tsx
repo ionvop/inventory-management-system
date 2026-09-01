@@ -9,13 +9,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FileJson, FileSpreadsheet, FileText, Download } from "lucide-react";
+import { FileSpreadsheet, FileText, Download } from "lucide-react";
 
 interface ReportGeneratorProps {
   onGenerate: (params: {
     date_from?: string;
     date_to?: string;
-    format: "json" | "csv" | "pdf";
+    format: "csv" | "pdf" | "excel";
   }) => void;
   isGenerating: boolean;
 }
@@ -26,7 +26,7 @@ export default function ReportGenerator({
 }: ReportGeneratorProps) {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [format, setFormat] = useState<"json" | "csv" | "pdf">("json");
+  const [format, setFormat] = useState<"csv" | "pdf" | "excel">("excel");
 
   const handleGenerate = () => {
     onGenerate({
@@ -68,15 +68,15 @@ export default function ReportGenerator({
           </Label>
           <Select
             value={format}
-            onValueChange={(v) => setFormat(v as "json" | "csv" | "pdf")}
+            onValueChange={(v) => setFormat(v as "csv" | "pdf" | "excel")}
           >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="json">
+              <SelectItem value="excel">
                 <span className="flex items-center gap-2">
-                  <FileJson className="w-4 h-4" /> JSON
+                  <FileSpreadsheet className="w-4 h-4" /> EXCEL
                 </span>
               </SelectItem>
               <SelectItem value="csv">
