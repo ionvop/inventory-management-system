@@ -84,42 +84,31 @@
             <thead>
                 <tr>
                     <th>Item</th>
-                    <th>Unit</th>
-                    <th class="text-right">Current Stock</th>
-                    <th class="text-right">Minimum Stock</th>
-                    <th>Transaction Date</th>
-                    <th>Movement</th>
-                    <th class="text-right">Quantity</th>
+                    <th>Type</th>
+                    <th class="text-right">Qty</th>
+                    <th class="text-right">Stock After</th>
+                    <th class="text-right">Bid After</th>
                     <th>User</th>
+                    <th>Date</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach ($items as $item)
-                    @if ($item->transactions->isEmpty())
+                    @foreach ($item->transactions as $t)
                         <tr class="{{ $item->is_low_stock ? 'low-stock' : '' }}">
                             <td>{{ $item->name }}</td>
-                            <td>{{ $item->unit }}</td>
-                            <td class="text-right">{{ $item->current_stock }}</td>
-                            <td class="text-right">{{ $item->minimum_stock }}</td>
-                            <td></td>
-                            <td></td>
-                            <td class="text-right"></td>
-                            <td></td>
+                            <td class="movement-{{ $t->movement }}">
+                                {{ $t->movement === 'in' ? 'In' : ($t->movement === 'out' ? 'Out' : 'Set Bid') }}
+                            </td>
+                            <td class="text-right">
+                                {{ $t->movement === 'in' ? '+' : ($t->movement === 'out' ? '-' : '') }}{{ $t->quantity }}{{ $item->unit ? ' '.$item->unit : '' }}
+                            </td>
+                            <td class="text-right">{{ $t->stock_after !== null ? $t->stock_after.($item->unit ? ' '.$item->unit : '') : '—' }}</td>
+                            <td class="text-right">{{ $t->bid_after !== null ? $t->bid_after.($item->unit ? ' '.$item->unit : '') : '—' }}</td>
+                            <td>{{ $t->user->username }}</td>
+                            <td>{{ $t->posted_at->timezone($timezone)->format('M j, g:i A') }}</td>
                         </tr>
-                    @else
-                        @foreach ($item->transactions as $t)
-                            <tr class="{{ $item->is_low_stock ? 'low-stock' : '' }}">
-                                <td>{{ $item->name }}</td>
-                                <td>{{ $item->unit }}</td>
-                                <td class="text-right">{{ $item->current_stock }}</td>
-                                <td class="text-right">{{ $item->minimum_stock }}</td>
-                                <td>{{ $t->posted_at->timezone($timezone)->format('Y-m-d H:i') }}</td>
-                                <td class="movement-{{ $t->movement }}">{{ ucfirst($t->movement) }}</td>
-                                <td class="text-right">{{ $t->quantity }}</td>
-                                <td>{{ $t->user->username }}</td>
-                            </tr>
-                        @endforeach
-                    @endif
+                    @endforeach
                 @endforeach
             </tbody>
         </table>
