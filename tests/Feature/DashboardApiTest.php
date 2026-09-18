@@ -14,6 +14,7 @@ it('returns the dashboard summary shape', function () {
                 'total_items',
                 'low_stock_count',
                 'low_stock_items',
+                'bid_items',
                 'today_transactions' => ['in_count', 'out_count'],
                 'recent_transactions',
             ],
@@ -58,6 +59,30 @@ it('includes recent transactions', function () {
         ->assertOk()
         ->assertJsonCount(1, 'data.recent_transactions')
         ->assertJsonPath('data.recent_transactions.0.quantity', 5);
+});
+
+it('lists only items with an active bid', function () {
+    actingAsUser();
+    $active = Item::factory()->create(['name' => 'Active']);
+    $exhausted = Item::factory()->create(['name' => 'Exhausted']);
+    $none = Item::factory()->create(['name' => 'None']);
+
+    // Active: bid 10, in 4 -> current bid 6.
+    Transaction::factory()->create(['item_id' => $active->id, 'movement' => 'bid', 'quantity' => 10, 'posted_at' => now()->subDays(2)]);
+    Transaction::factory()->create(['item_id' => $active->id, 'movement' => 'in', 'quantity' => 4, 'posted_at' => now()->subDay()]);
+
+    // Exhausted: bid 5, in 10 -> clamped to 0, so not active.
+    Transaction::factory()->create(['item_id' => $exhausted->id, 'movement' => 'bid', 'quantity' => 5, 'posted_at' => now()->subDays(2)]);
+    Transaction::factory()->create(['item_id' => $exhausted->id, 'movement' => 'in', 'quantity' => 10, 'posted_at' => now()->subDay()]);
+
+    // None: no bid transactions at all.
+    Transaction::factory()->create(['item_id' => $none->id, 'movement' => 'in', 'quantity' => 3]);
+
+    $this->getJson('/api/dashboard/summary')
+        ->assertOk()
+        ->assertJsonCount(1, 'data.bid_items')
+        ->assertJsonPath('data.bid_items.0.name', 'Active')
+        ->assertJsonPath('data.bid_items.0.current_bid', 6);
 });
 
 it('uses the X-Timezone header to determine today boundaries', function () {
