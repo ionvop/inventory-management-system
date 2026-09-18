@@ -55,7 +55,11 @@ class TransactionController extends Controller
         $stockAfterById = [];
 
         foreach ($history as $tx) {
-            $delta = $tx->movement === 'in' ? $tx->quantity : -$tx->quantity;
+            $delta = match ($tx->movement) {
+                'in' => $tx->quantity,
+                'out' => -$tx->quantity,
+                default => 0, // 'bid' does not change physical stock
+            };
             $running[$tx->item_id] = ($running[$tx->item_id] ?? 0) + $delta;
             $stockAfterById[$tx->item_id][$tx->id] = $running[$tx->item_id];
         }
@@ -105,7 +109,12 @@ class TransactionController extends Controller
 
         $item = Item::withStock()->findOrFail($transaction->item_id);
         // Back out this transaction's existing effect before re-checking.
-        $stockExcludingThis = $item->current_stock - ($transaction->movement === 'in' ? $transaction->quantity : -$transaction->quantity);
+        $existingDelta = match ($transaction->movement) {
+            'in' => $transaction->quantity,
+            'out' => -$transaction->quantity,
+            default => 0, // 'bid' does not change physical stock
+        };
+        $stockExcludingThis = $item->current_stock - $existingDelta;
 
         if ($movement === 'out' && $quantity > $stockExcludingThis) {
             throw new ApiException('INSUFFICIENT_STOCK', 'This edit would drive stock negative.', 422, [
