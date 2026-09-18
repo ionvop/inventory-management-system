@@ -29,10 +29,10 @@ class TransactionController extends Controller
     }
 
     /**
-     * Attach a per-item running balance ("stock_after") to each transaction
-     * on the current page. Computed from the FULL history of each item on the
-     * page (ordered by posted_at, then id) so pagination and movement/date
-     * filters don't skew the resulting stock.
+     * Attach a per-item running balance ("stock_after") and running bid
+     * ("bid_after") to each transaction on the current page. Computed from
+     * the FULL history of each item on the page (ordered by posted_at, then
+     * id) so pagination and movement/date filters don't skew the results.
      */
     private function attachStockAfter(array $transactions): void
     {
@@ -53,6 +53,8 @@ class TransactionController extends Controller
 
         $running = [];
         $stockAfterById = [];
+        $runningBid = [];
+        $bidAfterById = [];
 
         foreach ($history as $tx) {
             $delta = match ($tx->movement) {
@@ -62,10 +64,21 @@ class TransactionController extends Controller
             };
             $running[$tx->item_id] = ($running[$tx->item_id] ?? 0) + $delta;
             $stockAfterById[$tx->item_id][$tx->id] = $running[$tx->item_id];
+
+            // Running bid: a "bid" sets it, a subsequent "in" deducts
+            // (clamped at 0), and "out" leaves it unchanged.
+            $currentBid = $runningBid[$tx->item_id] ?? 0;
+            $runningBid[$tx->item_id] = match ($tx->movement) {
+                'bid' => $tx->quantity,
+                'in' => max(0, $currentBid - $tx->quantity),
+                default => $currentBid,
+            };
+            $bidAfterById[$tx->item_id][$tx->id] = $runningBid[$tx->item_id];
         }
 
         foreach ($transactions as $tx) {
             $tx->stock_after = $stockAfterById[$tx->item_id][$tx->id] ?? null;
+            $tx->bid_after = $bidAfterById[$tx->item_id][$tx->id] ?? null;
         }
     }
 
