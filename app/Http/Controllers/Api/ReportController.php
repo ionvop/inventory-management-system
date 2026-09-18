@@ -30,6 +30,8 @@ class ReportController extends Controller
             }])
             ->get();
 
+        $this->attachRunningBalances($items);
+
         return match ($format) {
             'csv' => $this->csv($items, $timezone),
             'excel' => $this->excel($items, $timezone, $dateFrom),
@@ -46,17 +48,110 @@ class ReportController extends Controller
     {
         return response()->streamDownload(function () use ($items, $timezone) {
             $out = fopen('php://output', 'w');
-            fputcsv($out, ['Item', 'Unit', 'Current Stock', 'Minimum Stock', 'Transaction Date', 'Movement', 'Quantity', 'User']);
+            fputcsv($out, ['Item', 'Type', 'Qty', 'Stock After', 'Bid After', 'User', 'Date']);
             foreach ($items as $item) {
+                // Match the transactions table: only items with transactions
+                // in the selected range appear.
                 if ($item->transactions->isEmpty()) {
-                    fputcsv($out, [$item->name, $item->unit, $item->current_stock, $item->minimum_stock, '', '', '', '']);
+                    continue;
                 }
                 foreach ($item->transactions as $t) {
-                    fputcsv($out, [$item->name, $item->unit, $item->current_stock, $item->minimum_stock, $t->posted_at->timezone($timezone)->format('Y-m-d H:i'), $t->movement, $t->quantity, $t->user->username]);
+                    fputcsv($out, [
+                        $item->name,
+                        ucfirst($t->movement),
+                        $this->quantityLabel($t, $item->unit),
+                        $this->balanceLabel($t->stock_after, $item->unit),
+                        $this->balanceLabel($t->bid_after, $item->unit),
+                        $t->user->username,
+                        $t->posted_at->timezone($timezone)->format('M j, g:i A'),
+                    ]);
                 }
             }
             fclose($out);
         }, 'inventory-report-'.now()->timezone($timezone)->format('Y-m-d').'.csv');
+    }
+
+    /**
+     * Attach a per-item running balance ("stock_after") and running bid
+     * ("bid_after") to each transaction loaded on the report's items.
+     * Mirrors TransactionController::attachStockAfter() so the report
+     * matches the transactions table. Computed from the FULL history of
+     * each item (ordered by posted_at, then id) so the date-range filter
+     * doesn't skew the running totals.
+     */
+    private function attachRunningBalances(Collection $items): void
+    {
+        $itemIds = $items->pluck('id')->unique()->values();
+
+        if ($itemIds->isEmpty()) {
+            return;
+        }
+
+        $history = Transaction::whereIn('item_id', $itemIds)
+            ->orderBy('item_id')
+            ->orderBy('posted_at')
+            ->orderBy('id')
+            ->get(['id', 'item_id', 'movement', 'quantity']);
+
+        $running = [];
+        $stockAfterById = [];
+        $runningBid = [];
+        $bidAfterById = [];
+
+        foreach ($history as $tx) {
+            $delta = match ($tx->movement) {
+                'in' => $tx->quantity,
+                'out' => -$tx->quantity,
+                default => 0, // 'bid' does not change physical stock
+            };
+            $running[$tx->item_id] = ($running[$tx->item_id] ?? 0) + $delta;
+            $stockAfterById[$tx->item_id][$tx->id] = $running[$tx->item_id];
+
+            // Running bid: a "bid" sets it, a subsequent "in" deducts
+            // (clamped at 0), and "out" leaves it unchanged.
+            $currentBid = $runningBid[$tx->item_id] ?? 0;
+            $runningBid[$tx->item_id] = match ($tx->movement) {
+                'bid' => $tx->quantity,
+                'in' => max(0, $currentBid - $tx->quantity),
+                default => $currentBid,
+            };
+            $bidAfterById[$tx->item_id][$tx->id] = $runningBid[$tx->item_id];
+        }
+
+        foreach ($items as $item) {
+            foreach ($item->transactions as $t) {
+                $t->stock_after = $stockAfterById[$item->id][$t->id] ?? null;
+                $t->bid_after = $bidAfterById[$item->id][$t->id] ?? null;
+            }
+        }
+    }
+
+    /**
+     * Quantity cell matching the transactions table: "+5 kg" for in,
+     * "-3 kg" for out, "2 kg" for bid.
+     */
+    private function quantityLabel(Transaction $t, string $unit): string
+    {
+        $prefix = match ($t->movement) {
+            'in' => '+',
+            'out' => '-',
+            default => '',
+        };
+
+        return $prefix.$t->quantity.($unit ? ' '.$unit : '');
+    }
+
+    /**
+     * Balance cell matching the transactions table: value + unit, or "—"
+     * when the running balance was not computed.
+     */
+    private function balanceLabel(?int $value, string $unit): string
+    {
+        if ($value === null) {
+            return '—';
+        }
+
+        return $value.($unit ? ' '.$unit : '');
     }
 
     private function excel(Collection $items, string $timezone, ?string $dateFrom): StreamedResponse
