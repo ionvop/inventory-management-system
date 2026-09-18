@@ -162,6 +162,28 @@ it('does not change stock_after for a bid transaction', function () {
         ->assertJsonPath('data.2.stock_after', 13);
 });
 
+it('reports the resulting bid after each transaction', function () {
+    actingAsUser();
+    $item = Item::factory()->create();
+
+    // Item history: bid 5, in 3, in 2, out 1 -> running bid 5, 2, 0, 0.
+    $bid = Transaction::factory()->create(['item_id' => $item->id, 'movement' => 'bid', 'quantity' => 5, 'posted_at' => now()->subDays(4)]);
+    $in1 = Transaction::factory()->create(['item_id' => $item->id, 'movement' => 'in', 'quantity' => 3, 'posted_at' => now()->subDays(3)]);
+    $in2 = Transaction::factory()->create(['item_id' => $item->id, 'movement' => 'in', 'quantity' => 2, 'posted_at' => now()->subDays(2)]);
+    $out = Transaction::factory()->create(['item_id' => $item->id, 'movement' => 'out', 'quantity' => 1, 'posted_at' => now()->subDay()]);
+
+    $this->getJson('/api/transactions?item_id='.$item->id.'&sort=posted_at&order=asc')
+        ->assertOk()
+        ->assertJsonPath('data.0.id', $bid->id)
+        ->assertJsonPath('data.0.bid_after', 5)
+        ->assertJsonPath('data.1.id', $in1->id)
+        ->assertJsonPath('data.1.bid_after', 2)
+        ->assertJsonPath('data.2.id', $in2->id)
+        ->assertJsonPath('data.2.bid_after', 0)
+        ->assertJsonPath('data.3.id', $out->id)
+        ->assertJsonPath('data.3.bid_after', 0); // out leaves the bid unchanged
+});
+
 it('rejects an out transaction that exceeds stock', function () {
     actingAsUser();
     $item = Item::factory()->create();
