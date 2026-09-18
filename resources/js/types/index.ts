@@ -14,11 +14,12 @@ export interface Item {
   current_stock: number;
   minimum_stock: number;
   is_low_stock: boolean;
+  current_bid: number;
   created_at: string;
   updated_at: string;
 }
 
-export type MovementType = "in" | "out";
+export type MovementType = "in" | "out" | "bid";
 
 export interface Transaction {
   id: number;
@@ -63,6 +64,7 @@ export interface DashboardSummary {
     out_count: number;
   };
   low_stock_items: Item[];
+  bid_items: Item[];
   recent_transactions: Transaction[];
 }
 
