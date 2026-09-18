@@ -31,6 +31,51 @@ it('computes current stock from transactions', function () {
         ->assertJsonPath('data.0.is_low_stock', false);
 });
 
+it('computes current bid from transactions', function () {
+    actingAsUser();
+    $item = Item::factory()->create();
+    // bid 20, then in 6 -> current bid 14.
+    Transaction::factory()->create(['item_id' => $item->id, 'movement' => 'bid', 'quantity' => 20, 'posted_at' => now()->subDays(2)]);
+    Transaction::factory()->create(['item_id' => $item->id, 'movement' => 'in', 'quantity' => 6, 'posted_at' => now()->subDay()]);
+
+    $this->getJson('/api/items')
+        ->assertOk()
+        ->assertJsonPath('data.0.current_bid', 14);
+});
+
+it('uses the most recent bid and clamps at zero', function () {
+    actingAsUser();
+    $item = Item::factory()->create();
+    // bid 5, in 10 (clamps to 0), then a new bid 8 resets it.
+    Transaction::factory()->create(['item_id' => $item->id, 'movement' => 'bid', 'quantity' => 5, 'posted_at' => now()->subDays(3)]);
+    Transaction::factory()->create(['item_id' => $item->id, 'movement' => 'in', 'quantity' => 10, 'posted_at' => now()->subDays(2)]);
+    Transaction::factory()->create(['item_id' => $item->id, 'movement' => 'bid', 'quantity' => 8, 'posted_at' => now()->subDay()]);
+
+    $this->getJson('/api/items')
+        ->assertOk()
+        ->assertJsonPath('data.0.current_bid', 8);
+});
+
+it('does not let stock out affect the current bid', function () {
+    actingAsUser();
+    $item = Item::factory()->create();
+    Transaction::factory()->create(['item_id' => $item->id, 'movement' => 'bid', 'quantity' => 10, 'posted_at' => now()->subDays(2)]);
+    Transaction::factory()->create(['item_id' => $item->id, 'movement' => 'out', 'quantity' => 4, 'posted_at' => now()->subDay()]);
+
+    $this->getJson('/api/items')
+        ->assertOk()
+        ->assertJsonPath('data.0.current_bid', 10);
+});
+
+it('returns zero current bid when no bid is set', function () {
+    actingAsUser();
+    Item::factory()->create();
+
+    $this->getJson('/api/items')
+        ->assertOk()
+        ->assertJsonPath('data.0.current_bid', 0);
+});
+
 it('filters items by search term', function () {
     actingAsUser();
     Item::factory()->create(['name' => 'Sugar']);
