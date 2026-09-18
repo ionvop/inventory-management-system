@@ -11,8 +11,9 @@ class DashboardController extends Controller
 {
     public function summary(Request $request)
     {
-        $items = Item::withStock()->get();
+        $items = Item::withStock()->withBid()->get();
         $lowStock = $items->filter(fn ($i) => $i->is_low_stock)->values();
+        $bidItems = $items->filter(fn ($i) => $i->current_bid > 0)->values();
 
         $timezone = $this->resolveTimezone($request);
         $todayStart = Carbon::parse('today', $timezone)->startOfDay()->utc();
@@ -22,6 +23,7 @@ class DashboardController extends Controller
             'total_items' => $items->count(),
             'low_stock_count' => $lowStock->count(),
             'low_stock_items' => $lowStock->take(10)->values(),
+            'bid_items' => $bidItems->take(10)->values(),
             'today_transactions' => [
                 'in_count' => Transaction::whereBetween('posted_at', [$todayStart, $todayEnd])->where('movement', 'in')->count(),
                 'out_count' => Transaction::whereBetween('posted_at', [$todayStart, $todayEnd])->where('movement', 'out')->count(),
