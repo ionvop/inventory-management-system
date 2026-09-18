@@ -23,7 +23,7 @@ class UpdateTransactionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'movement' => 'sometimes|in:in,out',
+            'movement' => 'sometimes|in:in,out,bid',
             'quantity' => 'sometimes|integer|min:1',
             'posted_at' => 'sometimes|date_format:Y-m-d\TH:i:s',
         ];
