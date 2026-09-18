@@ -114,10 +114,12 @@ it('returns the inventory report as csv', function () {
     // matching the exact rendered string.
     $rows = array_map('str_getcsv', array_filter(explode("\n", trim($content))));
 
-    expect($rows[0])->toBe(['Item', 'Unit', 'Current Stock', 'Minimum Stock', 'Transaction Date', 'Movement', 'Quantity', 'User']);
+    expect($rows[0])->toBe(['Item', 'Type', 'Qty', 'Stock After', 'Bid After', 'User', 'Date']);
     expect($rows[1][0])->toBe('Sugar')
-        ->and($rows[1][1])->toBe('kg')
-        ->and($rows[1][6])->toBe('5');
+        ->and($rows[1][1])->toBe('In')
+        ->and($rows[1][2])->toBe('+5 kg')
+        ->and($rows[1][3])->toBe('5 kg')
+        ->and($rows[1][4])->toBe('0 kg');
 });
 
 it('returns the inventory report as pdf', function () {
@@ -131,7 +133,7 @@ it('returns the inventory report as pdf', function () {
 
 it('filters the report by date range', function () {
     actingAsUser();
-    $item = Item::factory()->create(['name' => 'Sugar']);
+    $item = Item::factory()->create(['name' => 'Sugar', 'unit' => 'kg']);
     Transaction::factory()->create(['item_id' => $item->id, 'movement' => 'in', 'quantity' => 5, 'posted_at' => now()->subDays(10)]);
     Transaction::factory()->create(['item_id' => $item->id, 'movement' => 'in', 'quantity' => 3, 'posted_at' => now()]);
 
@@ -142,13 +144,13 @@ it('filters the report by date range', function () {
 
     // Header + 1 filtered transaction row.
     expect($rows)->toHaveCount(2);
-    expect($rows[1][6])->toBe('3');
+    expect($rows[1][2])->toBe('+3 kg');
 });
 
 it('respects the X-Timezone header when filtering the report by date', function () {
     actingAsUser();
 
-    $item = Item::factory()->create(['name' => 'Sugar']);
+    $item = Item::factory()->create(['name' => 'Sugar', 'unit' => 'kg']);
 
     // 2026-09-01 04:30 UTC == 2026-09-01 00:30 America/New_York (EDT, UTC-4).
     // This transaction is on Sept 1 in the requested timezone.
@@ -176,5 +178,47 @@ it('respects the X-Timezone header when filtering the report by date', function 
 
     // Header + only the transaction that falls on Sept 1 in America/New_York.
     expect($rows)->toHaveCount(2);
-    expect($rows[1][6])->toBe('5');
+    expect($rows[1][2])->toBe('+5 kg');
+});
+
+it('includes running stock and bid balances in the csv export', function () {
+    actingAsUser();
+    $item = Item::factory()->create(['name' => 'Sugar', 'unit' => 'kg']);
+
+    // Bid of 10, then an in of 4 → stock after 4, bid after 6.
+    Transaction::factory()->create(['item_id' => $item->id, 'movement' => 'bid', 'quantity' => 10, 'posted_at' => '2026-09-01 08:00:00']);
+    Transaction::factory()->create(['item_id' => $item->id, 'movement' => 'in', 'quantity' => 4, 'posted_at' => '2026-09-01 09:00:00']);
+
+    $response = $this->get('/api/reports/inventory?format=csv');
+
+    $response->assertOk();
+    $rows = array_map('str_getcsv', array_filter(explode("\n", trim($response->streamedContent()))));
+
+    // Header + bid row + in row.
+    expect($rows)->toHaveCount(3);
+
+    // Bid row: qty "10 kg", stock after "0 kg", bid after "10 kg".
+    expect($rows[1][2])->toBe('10 kg')
+        ->and($rows[1][3])->toBe('0 kg')
+        ->and($rows[1][4])->toBe('10 kg');
+
+    // In row: qty "+4 kg", stock after "4 kg", bid after "6 kg".
+    expect($rows[2][2])->toBe('+4 kg')
+        ->and($rows[2][3])->toBe('4 kg')
+        ->and($rows[2][4])->toBe('6 kg');
+});
+
+it('omits items with no transactions in the selected range from csv', function () {
+    actingAsUser();
+    $item = Item::factory()->create(['name' => 'Sugar']);
+    Transaction::factory()->create(['item_id' => $item->id, 'movement' => 'in', 'quantity' => 5, 'posted_at' => '2026-09-01 08:00:00']);
+
+    $response = $this->get('/api/reports/inventory?format=csv&date_from=2026-10-01&date_to=2026-10-31');
+
+    $response->assertOk();
+    $rows = array_map('str_getcsv', array_filter(explode("\n", trim($response->streamedContent()))));
+
+    // Only the header remains.
+    expect($rows)->toHaveCount(1);
+    expect($rows[0])->toBe(['Item', 'Type', 'Qty', 'Stock After', 'Bid After', 'User', 'Date']);
 });
