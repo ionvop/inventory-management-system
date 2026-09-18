@@ -11,7 +11,7 @@ class ItemController extends Controller
 {
     public function index(Request $request)
     {
-        $items = Item::withStock()
+        $items = Item::withStock()->withBid()
             ->when($request->query('search'), fn ($q, $s) => $q->where('name', 'like', "%{$s}%"))
             ->get();
 
@@ -49,13 +49,13 @@ class ItemController extends Controller
 
     public function show(Item $item)
     {
-        return $this->data(Item::withStock()->findOrFail($item->id));
+        return $this->data(Item::withStock()->withBid()->findOrFail($item->id));
     }
 
     public function update(UpdateItemRequest $request, Item $item)
     {
         $item->update($request->validated());
-        return $this->data(Item::withStock()->findOrFail($item->id));
+        return $this->data(Item::withStock()->withBid()->findOrFail($item->id));
     }
 
     public function destroy(Item $item)
