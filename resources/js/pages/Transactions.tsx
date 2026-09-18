@@ -159,6 +159,7 @@ export default function Transactions() {
             <SelectItem value="all">All Types</SelectItem>
             <SelectItem value="in">Stock In</SelectItem>
             <SelectItem value="out">Stock Out</SelectItem>
+            <SelectItem value="bid">Set Bid</SelectItem>
           </SelectContent>
         </Select>
       </div>
