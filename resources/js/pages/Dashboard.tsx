@@ -3,6 +3,7 @@ import { api } from "@/lib/api";
 import SummaryCards from "@/components/dashboard/SummaryCards";
 import LowStockList from "@/components/dashboard/LowStockList";
 import RecentTransactions from "@/components/dashboard/RecentTransactions";
+import BidList from "@/components/dashboard/BidList";
 import { SummaryCardSkeleton } from "@/components/shared/LoadingSkeleton";
 import { AlertCircle } from "lucide-react";
 
@@ -38,6 +39,8 @@ export default function Dashboard() {
       {data && (
         <>
           <SummaryCards summary={data} />
+
+          <BidList items={data.bid_items} />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <LowStockList items={data.low_stock_items} />
