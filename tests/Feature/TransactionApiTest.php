@@ -127,6 +127,41 @@ it('creates an out transaction when stock is sufficient', function () {
         ->assertJsonPath('data.movement', 'out');
 });
 
+it('creates a bid transaction', function () {
+    $user = actingAsUser();
+    $item = Item::factory()->create();
+
+    $this->postJson('/api/transactions', [
+        'item_id' => $item->id,
+        'movement' => 'bid',
+        'quantity' => 25,
+    ])->assertCreated()
+        ->assertJsonPath('data.movement', 'bid')
+        ->assertJsonPath('data.quantity', 25)
+        ->assertJsonPath('data.user_id', $user->id);
+
+    $this->assertDatabaseHas('transactions', [
+        'item_id' => $item->id,
+        'user_id' => $user->id,
+        'movement' => 'bid',
+        'quantity' => 25,
+    ]);
+});
+
+it('does not change stock_after for a bid transaction', function () {
+    actingAsUser();
+    $item = Item::factory()->create();
+    Transaction::factory()->create(['item_id' => $item->id, 'movement' => 'in', 'quantity' => 10, 'posted_at' => now()->subDays(2)]);
+    $bid = Transaction::factory()->create(['item_id' => $item->id, 'movement' => 'bid', 'quantity' => 5, 'posted_at' => now()->subDay()]);
+    $in = Transaction::factory()->create(['item_id' => $item->id, 'movement' => 'in', 'quantity' => 3, 'posted_at' => now()]);
+
+    $this->getJson('/api/transactions?item_id='.$item->id.'&sort=posted_at&order=asc')
+        ->assertOk()
+        ->assertJsonPath('data.0.stock_after', 10)
+        ->assertJsonPath('data.1.stock_after', 10) // bid does not change stock
+        ->assertJsonPath('data.2.stock_after', 13);
+});
+
 it('rejects an out transaction that exceeds stock', function () {
     actingAsUser();
     $item = Item::factory()->create();
