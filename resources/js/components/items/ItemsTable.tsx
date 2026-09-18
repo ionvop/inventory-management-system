@@ -54,6 +54,9 @@ export default function ItemsTable({
                 <SortHeader column="current_stock" label="Stock" />
               </th>
               <th className="text-right px-4 py-3">
+                <SortHeader column="current_bid" label="Bid" />
+              </th>
+              <th className="text-right px-4 py-3">
                 <SortHeader column="minimum_stock" label="Min" />
               </th>
               <th className="text-center px-4 py-3">
@@ -91,6 +94,9 @@ export default function ItemsTable({
                   </td>
                   <td className="px-4 py-3 text-sm text-right font-semibold text-gray-900 dark:text-white tabular-nums">
                     {withUnit(item.current_stock, item.unit)}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-right font-semibold text-violet-600 dark:text-violet-400 tabular-nums">
+                    {withUnit(item.current_bid, item.unit)}
                   </td>
                   <td className="px-4 py-3 text-sm text-right text-gray-600 dark:text-gray-400 tabular-nums">
                     {withUnit(item.minimum_stock, item.unit)}
@@ -185,6 +191,15 @@ export default function ItemsTable({
                   </p>
                   <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase">
                     Stock
+                  </p>
+                </div>
+                <div className="w-px h-6 bg-gray-200 dark:bg-gray-700" />
+                <div>
+                  <p className="text-lg font-bold text-violet-600 dark:text-violet-400 tabular-nums">
+                    {withUnit(item.current_bid, item.unit)}
+                  </p>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase">
+                    Bid
                   </p>
                 </div>
                 <div className="w-px h-6 bg-gray-200 dark:bg-gray-700" />
