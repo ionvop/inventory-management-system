@@ -117,6 +117,15 @@ export default function TransactionForm({
             : 0)
       : selectedItem.current_stock;
 
+    // Back out the transaction's own bid effect the same way. A "bid" sets
+    // an absolute value and "out" leaves the bid unchanged, so only an "in"
+    // (which deducts from the bid) needs to be reversed.
+    const baseBid = transaction
+      ? transaction.movement === "in"
+        ? selectedItem.current_bid + transaction.quantity
+        : selectedItem.current_bid
+      : selectedItem.current_bid;
+
     const quantity = Number(watchedQuantity);
     if (!Number.isFinite(quantity) || quantity <= 0) return null;
 
@@ -124,11 +133,22 @@ export default function TransactionForm({
     const delta = movementType === "in" ? quantity : movementType === "out" ? -quantity : 0;
     const projectedStock = baseStock + delta;
 
+    // A "bid" sets the bid to the quantity; an "in" deducts from it
+    // (clamped at 0); "out" leaves it unchanged.
+    const resultingBid =
+      movementType === "bid"
+        ? quantity
+        : movementType === "in"
+          ? Math.max(0, baseBid - quantity)
+          : baseBid;
+
     return {
       currentStock: selectedItem.current_stock,
       baseStock,
       projectedStock,
       delta,
+      baseBid,
+      resultingBid,
     };
   }, [selectedItem, transaction, watchedQuantity, movementType]);
 
@@ -285,6 +305,12 @@ export default function TransactionForm({
                     }`}
                   >
                     {stockPreview.projectedStock} {selectedItem?.unit}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium">Resulting bid</span>
+                  <span className="font-semibold tabular-nums text-foreground">
+                    {stockPreview.resultingBid} {selectedItem?.unit}
                   </span>
                 </div>
               </div>
