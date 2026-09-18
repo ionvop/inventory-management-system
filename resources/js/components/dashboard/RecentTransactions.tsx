@@ -1,4 +1,4 @@
-import { ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
+import { ArrowDownToLine, ArrowUpFromLine, Gavel } from "lucide-react";
 import { format } from "date-fns";
 import { withUnit } from "@/lib/utils";
 import type { Transaction } from "@/types";
@@ -42,13 +42,17 @@ export default function RecentTransactions({
               className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
                 tx.movement === "in"
                   ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400"
-                  : "bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400"
+                  : tx.movement === "out"
+                    ? "bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400"
+                    : "bg-violet-50 dark:bg-violet-950/30 text-violet-600 dark:text-violet-400"
               }`}
             >
               {tx.movement === "in" ? (
                 <ArrowDownToLine className="w-4 h-4" />
-              ) : (
+              ) : tx.movement === "out" ? (
                 <ArrowUpFromLine className="w-4 h-4" />
+              ) : (
+                <Gavel className="w-4 h-4" />
               )}
             </div>
             <div className="flex-1 min-w-0">
@@ -65,10 +69,16 @@ export default function RecentTransactions({
                 className={`text-sm font-semibold tabular-nums ${
                   tx.movement === "in"
                     ? "text-emerald-600 dark:text-emerald-400"
-                    : "text-rose-600 dark:text-rose-400"
+                    : tx.movement === "out"
+                      ? "text-rose-600 dark:text-rose-400"
+                      : "text-violet-600 dark:text-violet-400"
                 }`}
               >
-                {tx.movement === "in" ? "+" : "-"}
+                {tx.movement === "in"
+                  ? "+"
+                  : tx.movement === "out"
+                    ? "-"
+                    : ""}
                 {withUnit(tx.quantity, tx.item?.unit)}
               </span>
             </div>
