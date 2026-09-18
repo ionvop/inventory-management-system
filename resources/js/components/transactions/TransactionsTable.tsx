@@ -1,4 +1,4 @@
-import { Pencil, Trash2, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
+import { Pencil, Trash2, ArrowDownToLine, ArrowUpFromLine, Gavel } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
@@ -67,16 +67,24 @@ export default function TransactionsTable({
                     className={
                       tx.movement === "in"
                         ? "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
-                        : "bg-rose-100 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800"
+                        : tx.movement === "out"
+                          ? "bg-rose-100 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800"
+                          : "bg-violet-100 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-800"
                     }
                   >
                     <span className="flex items-center gap-1">
                       {tx.movement === "in" ? (
                         <ArrowDownToLine className="w-3 h-3" />
-                      ) : (
+                      ) : tx.movement === "out" ? (
                         <ArrowUpFromLine className="w-3 h-3" />
+                      ) : (
+                        <Gavel className="w-3 h-3" />
                       )}
-                      {tx.movement === "in" ? "In" : "Out"}
+                      {tx.movement === "in"
+                        ? "In"
+                        : tx.movement === "out"
+                          ? "Out"
+                          : "Set Bid"}
                     </span>
                   </Badge>
                 </td>
@@ -85,10 +93,16 @@ export default function TransactionsTable({
                     className={
                       tx.movement === "in"
                         ? "text-emerald-600 dark:text-emerald-400"
-                        : "text-rose-600 dark:text-rose-400"
+                        : tx.movement === "out"
+                          ? "text-rose-600 dark:text-rose-400"
+                          : "text-violet-600 dark:text-violet-400"
                     }
                   >
-                    {tx.movement === "in" ? "+" : "−"}
+                    {tx.movement === "in"
+                      ? "+"
+                      : tx.movement === "out"
+                        ? "−"
+                        : ""}
                     {withUnit(tx.quantity, tx.item?.unit)}
                   </span>
                 </td>
@@ -168,26 +182,40 @@ export default function TransactionsTable({
                 className={
                   tx.movement === "in"
                     ? "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
-                    : "bg-rose-100 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800"
+                    : tx.movement === "out"
+                      ? "bg-rose-100 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800"
+                      : "bg-violet-100 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-800"
                 }
               >
                 <span className="flex items-center gap-1">
                   {tx.movement === "in" ? (
                     <ArrowDownToLine className="w-3 h-3" />
-                  ) : (
+                  ) : tx.movement === "out" ? (
                     <ArrowUpFromLine className="w-3 h-3" />
+                  ) : (
+                    <Gavel className="w-3 h-3" />
                   )}
-                  {tx.movement === "in" ? "In" : "Out"}
+                  {tx.movement === "in"
+                    ? "In"
+                    : tx.movement === "out"
+                      ? "Out"
+                      : "Set Bid"}
                 </span>
               </Badge>
               <span
                 className={`text-lg font-bold tabular-nums ${
                   tx.movement === "in"
                     ? "text-emerald-600 dark:text-emerald-400"
-                    : "text-rose-600 dark:text-rose-400"
+                    : tx.movement === "out"
+                      ? "text-rose-600 dark:text-rose-400"
+                      : "text-violet-600 dark:text-violet-400"
                 }`}
               >
-                {tx.movement === "in" ? "+" : "−"}
+                {tx.movement === "in"
+                  ? "+"
+                  : tx.movement === "out"
+                    ? "−"
+                    : ""}
                 {withUnit(tx.quantity, tx.item?.unit)}
               </span>
             </div>
