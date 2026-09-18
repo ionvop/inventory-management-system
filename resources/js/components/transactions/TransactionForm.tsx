@@ -33,7 +33,7 @@ import type { Transaction, MovementType } from "@/types";
 
 const transactionSchema = z.object({
   item_id: z.coerce.number().min(1, "Item is required"),
-  movement: z.enum(["in", "out"], {
+  movement: z.enum(["in", "out", "bid"], {
     required_error: "Movement type is required",
   }),
   quantity: z.coerce.number().min(0.01, "Must be greater than 0"),
@@ -112,13 +112,16 @@ export default function TransactionForm({
       ? selectedItem.current_stock -
         (transaction.movement === "in"
           ? transaction.quantity
-          : -transaction.quantity)
+          : transaction.movement === "out"
+            ? -transaction.quantity
+            : 0)
       : selectedItem.current_stock;
 
     const quantity = Number(watchedQuantity);
     if (!Number.isFinite(quantity) || quantity <= 0) return null;
 
-    const delta = movementType === "in" ? quantity : -quantity;
+    // "bid" transactions do not change physical stock.
+    const delta = movementType === "in" ? quantity : movementType === "out" ? -quantity : 0;
     const projectedStock = baseStock + delta;
 
     return {
@@ -216,6 +219,7 @@ export default function TransactionForm({
                     <SelectContent>
                       <SelectItem value="in">Stock In (+)</SelectItem>
                       <SelectItem value="out">Stock Out (−)</SelectItem>
+                      <SelectItem value="bid">Set Bid Quantity</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -254,10 +258,18 @@ export default function TransactionForm({
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">
-                    {movementType === "in" ? "Stock in (+)" : "Stock out (−)"}
+                    {movementType === "in"
+                      ? "Stock in (+)"
+                      : movementType === "out"
+                        ? "Stock out (−)"
+                        : "Set bid quantity"}
                   </span>
                   <span className="font-medium tabular-nums">
-                    {movementType === "in" ? "+" : "−"}
+                    {movementType === "in"
+                      ? "+"
+                      : movementType === "out"
+                        ? "−"
+                        : ""}
                     {Math.abs(stockPreview.delta)} {selectedItem?.unit}
                   </span>
                 </div>
@@ -312,16 +324,20 @@ export default function TransactionForm({
                 className={
                   movementType === "out"
                     ? "bg-rose-600 hover:bg-rose-700"
-                    : ""
+                    : movementType === "bid"
+                      ? "bg-violet-600 hover:bg-violet-700"
+                      : ""
                 }
               >
                 {isSubmitting
                   ? "Saving..."
                   : transaction
-                  ? "Update"
-                  : movementType === "out"
-                  ? "Record Out"
-                  : "Record In"}
+                    ? "Update"
+                    : movementType === "out"
+                      ? "Record Out"
+                      : movementType === "bid"
+                        ? "Set Bid"
+                        : "Record In"}
               </Button>
             </div>
           </form>
