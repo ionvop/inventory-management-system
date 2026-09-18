@@ -49,6 +49,7 @@
         }
         .movement-in { color: #047857; font-weight: bold; }
         .movement-out { color: #b91c1c; font-weight: bold; }
+        .movement-bid { color: #6d28d9; font-weight: bold; }
         .text-right { text-align: right; }
         .footer {
             margin-top: 24px;
