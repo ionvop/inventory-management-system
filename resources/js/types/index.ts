@@ -30,6 +30,7 @@ export interface Transaction {
   movement: MovementType;
   quantity: number;
   stock_after?: number | null;
+  bid_after?: number | null;
   created_at: string;
   updated_at: string;
   posted_at: string;
