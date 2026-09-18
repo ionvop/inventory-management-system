@@ -112,9 +112,11 @@ class ReportController extends Controller
             foreach ($transactions as $t) {
                 if ($t->movement === 'in') {
                     $in += $t->quantity;
-                } else {
+                } elseif ($t->movement === 'out') {
                     $out += $t->quantity;
                 }
+                // 'bid' transactions do not change physical stock, so they
+                // are excluded from the IN/OUT totals.
 
                 $userCounts[$t->user_id] = ($userCounts[$t->user_id] ?? 0) + 1;
                 if (!isset($userLatest[$t->user_id]) || $t->posted_at->greaterThan($userLatest[$t->user_id])) {
