@@ -1,0 +1,110 @@
+<?php
+
+use App\Models\Profile;
+use App\Models\SupplierItem;
+use App\Models\Transaction;
+use App\Services\BalanceService;
+
+test('computes balance for a single received transaction', function () {
+    $supplierItem = SupplierItem::factory()->create(['price' => 100, 'effective_date' => '2026-01-01']);
+    $profile = Profile::factory()->create();
+
+    Transaction::factory()->create([
+        'period_id' => 1,
+        'supplier_item_id' => $supplierItem->id,
+        'type' => 'received',
+        'quantity' => 10,
+        'unit_cost' => 100,
+        'total_cost' => 1000,
+        'transaction_date' => '2026-01-05',
+        'profile_id' => $profile->id,
+    ]);
+
+    $balance = (new BalanceService)->balanceFor($supplierItem->id, 1);
+
+    expect($balance['quantity'])->toBe(10.0);
+    expect($balance['total_cost'])->toBe(1000.0);
+});
+
+test('applies each movement type with the correct sign', function () {
+    $supplierItem = SupplierItem::factory()->create(['price' => 50, 'effective_date' => '2026-01-01']);
+    $profile = Profile::factory()->create();
+
+    $movements = [
+        ['received', 100, 5000],
+        ['consumption', 30, 1500],
+        ['return_from_ward', 5, 250],
+        ['return_to_supplier', 10, 500],
+        ['transfer_to_pharmacy', 20, 1000],
+        ['write_off', 5, 250],
+    ];
+
+    foreach ($movements as $movement) {
+        Transaction::factory()->create([
+            'period_id' => 1,
+            'supplier_item_id' => $supplierItem->id,
+            'type' => $movement[0],
+            'quantity' => $movement[1],
+            'total_cost' => $movement[2],
+            'transaction_date' => '2026-01-05',
+            'profile_id' => $profile->id,
+        ]);
+    }
+
+    // 100 + 5 - 30 - 10 - 20 - 5 = 40
+    // 5000 + 250 - 1500 - 500 - 1000 - 250 = 2000
+    $balance = (new BalanceService)->balanceFor($supplierItem->id, 1);
+
+    expect($balance['quantity'])->toBe(40.0);
+    expect($balance['total_cost'])->toBe(2000.0);
+});
+
+test('isolates balances by period', function () {
+    $supplierItem = SupplierItem::factory()->create(['price' => 100, 'effective_date' => '2026-01-01']);
+    $profile = Profile::factory()->create();
+
+    Transaction::factory()->create([
+        'period_id' => 1,
+        'supplier_item_id' => $supplierItem->id,
+        'type' => 'received',
+        'quantity' => 10,
+        'total_cost' => 1000,
+        'transaction_date' => '2026-01-05',
+        'profile_id' => $profile->id,
+    ]);
+
+    Transaction::factory()->create([
+        'period_id' => 2,
+        'supplier_item_id' => $supplierItem->id,
+        'type' => 'received',
+        'quantity' => 7,
+        'total_cost' => 700,
+        'transaction_date' => '2026-02-05',
+        'profile_id' => $profile->id,
+    ]);
+
+    $service = new BalanceService;
+
+    expect($service->balanceFor($supplierItem->id, 1)['quantity'])->toBe(10.0);
+    expect($service->balanceFor($supplierItem->id, 2)['quantity'])->toBe(7.0);
+});
+
+test('reports negative balances for a period', function () {
+    $supplierItem = SupplierItem::factory()->create(['price' => 100, 'effective_date' => '2026-01-01']);
+    $profile = Profile::factory()->create();
+
+    Transaction::factory()->create([
+        'period_id' => 1,
+        'supplier_item_id' => $supplierItem->id,
+        'type' => 'consumption',
+        'quantity' => 5,
+        'total_cost' => 500,
+        'transaction_date' => '2026-01-05',
+        'profile_id' => $profile->id,
+    ]);
+
+    $negatives = (new BalanceService)->negativeBalances(1);
+
+    expect($negatives)->toHaveKey($supplierItem->id);
+    expect($negatives[$supplierItem->id]['quantity'])->toBe(-5.0);
+});
