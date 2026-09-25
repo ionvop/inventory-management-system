@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Item;
+use App\Services\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Request;
@@ -18,6 +19,8 @@ use Inertia\Response;
  */
 class ItemController extends Controller
 {
+    public function __construct(protected AuditLogger $audit) {}
+
     /**
      * Display the item catalog.
      */
@@ -45,7 +48,9 @@ class ItemController extends Controller
     {
         $data = Validator::validate(Request::all(), $this->rules());
 
-        Item::create($data);
+        $item = Item::create($data);
+
+        $this->audit->record($item, 'create', null, $this->snapshot($item));
 
         return Redirect::back();
     }
@@ -57,9 +62,13 @@ class ItemController extends Controller
     {
         $item = Item::query()->findSole($id);
 
+        $before = $this->snapshot($item);
+
         $data = Validator::validate(Request::all(), $this->rules());
 
         $item->update($data);
+
+        $this->audit->record($item, 'update', $before, $this->snapshot($item));
 
         return Redirect::back();
     }
@@ -71,7 +80,11 @@ class ItemController extends Controller
     {
         $item = Item::query()->findSole($id);
 
+        $before = $this->snapshot($item);
+
         $item->delete();
+
+        $this->audit->record($item, 'delete', $before, null);
 
         return Redirect::back();
     }
@@ -88,6 +101,21 @@ class ItemController extends Controller
             'description' => 'required|string|max:255',
             'unit' => 'required|string|max:255',
             'active' => 'boolean',
+        ];
+    }
+
+    /**
+     * The auditable representation of an item.
+     *
+     * @return array<string, mixed>
+     */
+    protected function snapshot(Item $item): array
+    {
+        return [
+            'code' => $item->code,
+            'description' => $item->description,
+            'unit' => $item->unit,
+            'active' => $item->active,
         ];
     }
 }
