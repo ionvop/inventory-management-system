@@ -1,53 +1,31 @@
-import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api";
-import SummaryCards from "@/components/dashboard/SummaryCards";
-import LowStockList from "@/components/dashboard/LowStockList";
-import RecentTransactions from "@/components/dashboard/RecentTransactions";
-import BidList from "@/components/dashboard/BidList";
-import { SummaryCardSkeleton } from "@/components/shared/LoadingSkeleton";
-import { AlertCircle } from "lucide-react";
+import { Head, Link } from '@inertiajs/react';
+import AppearanceToggle from '@/components/appearance-toggle';
 
 export default function Dashboard() {
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["dashboard-summary"],
-    queryFn: api.getDashboardSummary,
-    refetchInterval: 30_000,
-  });
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-          Dashboard
-        </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-          Overview of your inventory
-        </p>
-      </div>
-
-      {isLoading && <SummaryCardSkeleton />}
-
-      {error && (
-        <div className="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/20 p-4 flex items-center gap-3">
-          <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-          <p className="text-sm text-red-600 dark:text-red-400">
-            {(error as Error).message || "Failed to load dashboard data"}
-          </p>
-        </div>
-      )}
-
-      {data && (
+    return (
         <>
-          <SummaryCards summary={data} />
-
-          <BidList items={data.bid_items} />
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <LowStockList items={data.low_stock_items} />
-            <RecentTransactions transactions={data.recent_transactions} />
-          </div>
+            <Head title="Dashboard" />
+            <div className="flex min-h-screen flex-col bg-background p-6 text-foreground">
+                <div className="flex items-center justify-between gap-4">
+                    <h1 className="text-xl font-bold text-foreground">
+                        Dashboard
+                    </h1>
+                    <div className="flex items-center gap-3">
+                        <AppearanceToggle />
+                        <Link
+                            href="/logout"
+                            method="post"
+                            as="button"
+                            className="rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground hover:bg-muted"
+                        >
+                            Switch profile
+                        </Link>
+                    </div>
+                </div>
+                <p className="mt-4 text-sm text-muted-foreground">
+                    Welcome. The workspace is ready for the next increment.
+                </p>
+            </div>
         </>
-      )}
-    </div>
-  );
+    );
 }
