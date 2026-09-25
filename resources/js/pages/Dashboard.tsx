@@ -37,6 +37,17 @@ export default function Dashboard() {
                             Manage the nutrition formula item catalog.
                         </p>
                     </Link>
+                    <Link
+                        href="/supplier-items"
+                        className="rounded-lg border border-border bg-card p-4 transition-colors hover:bg-muted"
+                    >
+                        <h2 className="text-sm font-semibold text-foreground">
+                            Supplier Items
+                        </h2>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                            Set contract prices linking suppliers to items.
+                        </p>
+                    </Link>
                 </div>
             )}
         </AppLayout>
