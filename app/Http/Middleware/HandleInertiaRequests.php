@@ -2,7 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Profile;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Session;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -38,6 +40,29 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'activeProfile' => fn (): ?array => $this->activeProfile(),
+        ];
+    }
+
+    /**
+     * Resolve the profile selected on the profile picker, if any.
+     *
+     * @return array{id: int, name: string, role: string}|null
+     */
+    protected function activeProfile(): ?array
+    {
+        $profileId = Session::get(ResolveActiveProfile::SESSION_KEY);
+
+        if (! is_int($profileId) && ! is_string($profileId)) {
+            return null;
+        }
+
+        $profile = Profile::query()->findSole($profileId);
+
+        return [
+            'id' => $profile->id,
+            'name' => $profile->name,
+            'role' => $profile->role,
         ];
     }
 }
