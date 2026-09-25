@@ -1,27 +1,23 @@
 import { Form, Head, Link } from '@inertiajs/react';
 import { useState } from 'react';
 import AppearanceToggle from '@/components/appearance-toggle';
+import ProfileForm from '@/components/profile-form';
+import { roleLabels, type ProfileRole } from '@/lib/profile-roles';
 
 interface Profile {
     id: number;
     name: string;
-    role: 'staff' | 'supervisor' | 'administrator';
+    role: ProfileRole;
 }
 
 interface ProfilePickerProps {
     profiles: Profile[];
 }
 
-const roleLabels: Record<Profile['role'], string> = {
-    staff: 'Staff',
-    supervisor: 'Supervisor',
-    administrator: 'Administrator',
-};
-
-const roleOptions: Profile['role'][] = ['staff', 'supervisor', 'administrator'];
-
 export default function ProfilePicker({ profiles }: ProfilePickerProps) {
-    const [managing, setManaging] = useState(false);
+    // Start in managing mode when there are no profiles yet, so the very first
+    // profile can be created (FR-1.4).
+    const [managing, setManaging] = useState(profiles.length === 0);
     const [editing, setEditing] = useState<Profile | null>(null);
     const [confirmingDelete, setConfirmingDelete] = useState<Profile | null>(
         null,
@@ -158,152 +154,30 @@ export default function ProfilePicker({ profiles }: ProfilePickerProps) {
                                 )}
                             </div>
                         ))}
-
-                        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border bg-card p-4 text-muted-foreground">
-                            <span className="text-3xl">+</span>
-                            <p className="mt-2 text-sm">Add profile</p>
-                        </div>
                     </div>
 
-                    {editing ? (
+                    {managing && (
                         <div className="mt-8 rounded-lg border border-border bg-card p-4">
                             <div className="mb-3 flex items-center justify-between">
                                 <h2 className="text-sm font-semibold text-foreground">
-                                    Edit profile
+                                    {editing ? 'Edit profile' : 'Add profile'}
                                 </h2>
-                                <button
-                                    type="button"
-                                    onClick={() => setEditing(null)}
-                                    className="text-xs text-muted-foreground hover:text-foreground"
-                                >
-                                    Cancel
-                                </button>
+                                {editing && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setEditing(null)}
+                                        className="text-xs text-muted-foreground hover:text-foreground"
+                                    >
+                                        Cancel
+                                    </button>
+                                )}
                             </div>
-                            <Form
-                                action={`/profiles/${editing.id}`}
-                                method="patch"
-                            >
-                                {({ errors, processing }) => (
-                                    <>
-                                        <div className="grid gap-3 sm:grid-cols-3">
-                                            <div>
-                                                <label className="mb-1 block text-xs text-muted-foreground">
-                                                    Name
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    name="name"
-                                                    defaultValue={editing.name}
-                                                    className="w-full rounded-md border border-input bg-card px-3 py-2 text-sm"
-                                                />
-                                                {errors.name && (
-                                                    <p className="mt-1 text-xs text-destructive">
-                                                        {errors.name}
-                                                    </p>
-                                                )}
-                                            </div>
-                                            <div>
-                                                <label className="mb-1 block text-xs text-muted-foreground">
-                                                    Role
-                                                </label>
-                                                <select
-                                                    name="role"
-                                                    defaultValue={editing.role}
-                                                    className="w-full rounded-md border border-input bg-card px-3 py-2 text-sm"
-                                                >
-                                                    {roleOptions.map((role) => (
-                                                        <option
-                                                            key={role}
-                                                            value={role}
-                                                        >
-                                                            {roleLabels[role]}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                                {errors.role && (
-                                                    <p className="mt-1 text-xs text-destructive">
-                                                        {errors.role}
-                                                    </p>
-                                                )}
-                                            </div>
-                                            <div className="flex items-end">
-                                                <button
-                                                    type="submit"
-                                                    disabled={processing}
-                                                    className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-                                                >
-                                                    {processing
-                                                        ? 'Saving...'
-                                                        : 'Save changes'}
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </>
-                                )}
-                            </Form>
-                        </div>
-                    ) : (
-                        <div className="mt-8 rounded-lg border border-border bg-card p-4">
-                            <h2 className="mb-3 text-sm font-semibold text-foreground">
-                                Add profile
-                            </h2>
-                            <Form action="/profiles" method="post">
-                                {({ errors, processing }) => (
-                                    <>
-                                        <div className="grid gap-3 sm:grid-cols-3">
-                                            <div>
-                                                <label className="mb-1 block text-xs text-muted-foreground">
-                                                    Name
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    name="name"
-                                                    className="w-full rounded-md border border-input bg-card px-3 py-2 text-sm"
-                                                />
-                                                {errors.name && (
-                                                    <p className="mt-1 text-xs text-destructive">
-                                                        {errors.name}
-                                                    </p>
-                                                )}
-                                            </div>
-                                            <div>
-                                                <label className="mb-1 block text-xs text-muted-foreground">
-                                                    Role
-                                                </label>
-                                                <select
-                                                    name="role"
-                                                    className="w-full rounded-md border border-input bg-card px-3 py-2 text-sm"
-                                                >
-                                                    {roleOptions.map((role) => (
-                                                        <option
-                                                            key={role}
-                                                            value={role}
-                                                        >
-                                                            {roleLabels[role]}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                                {errors.role && (
-                                                    <p className="mt-1 text-xs text-destructive">
-                                                        {errors.role}
-                                                    </p>
-                                                )}
-                                            </div>
-                                            <div className="flex items-end">
-                                                <button
-                                                    type="submit"
-                                                    disabled={processing}
-                                                    className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-                                                >
-                                                    {processing
-                                                        ? 'Adding...'
-                                                        : 'Add profile'}
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </>
-                                )}
-                            </Form>
+                            <ProfileForm
+                                key={editing?.id ?? 'create'}
+                                mode={editing ? 'edit' : 'create'}
+                                profile={editing ?? undefined}
+                                onCancel={() => setEditing(null)}
+                            />
                         </div>
                     )}
                 </div>
