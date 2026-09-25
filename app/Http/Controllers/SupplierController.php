@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Supplier;
+use App\Services\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Request;
@@ -18,6 +19,8 @@ use Inertia\Response;
  */
 class SupplierController extends Controller
 {
+    public function __construct(protected AuditLogger $audit) {}
+
     /**
      * Display the supplier catalog.
      */
@@ -44,7 +47,9 @@ class SupplierController extends Controller
     {
         $data = Validator::validate(Request::all(), $this->rules());
 
-        Supplier::create($data);
+        $supplier = Supplier::create($data);
+
+        $this->audit->record($supplier, 'create', null, $this->snapshot($supplier));
 
         return Redirect::back();
     }
@@ -56,9 +61,13 @@ class SupplierController extends Controller
     {
         $supplier = Supplier::query()->findSole($id);
 
+        $before = $this->snapshot($supplier);
+
         $data = Validator::validate(Request::all(), $this->rules());
 
         $supplier->update($data);
+
+        $this->audit->record($supplier, 'update', $before, $this->snapshot($supplier));
 
         return Redirect::back();
     }
@@ -70,7 +79,11 @@ class SupplierController extends Controller
     {
         $supplier = Supplier::query()->findSole($id);
 
+        $before = $this->snapshot($supplier);
+
         $supplier->delete();
+
+        $this->audit->record($supplier, 'delete', $before, null);
 
         return Redirect::back();
     }
@@ -86,6 +99,20 @@ class SupplierController extends Controller
             'name' => 'required|string|max:255',
             'contract_status' => 'nullable|string|max:255',
             'active' => 'boolean',
+        ];
+    }
+
+    /**
+     * The auditable representation of a supplier.
+     *
+     * @return array<string, mixed>
+     */
+    protected function snapshot(Supplier $supplier): array
+    {
+        return [
+            'name' => $supplier->name,
+            'contract_status' => $supplier->contract_status,
+            'active' => $supplier->active,
         ];
     }
 }
