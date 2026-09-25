@@ -8,6 +8,11 @@ declare module '@inertiajs/core' {
     export interface InertiaConfig {
         sharedPageProps: {
             name: string;
+            activeProfile: {
+                id: number;
+                name: string;
+                role: 'staff' | 'supervisor' | 'administrator';
+            } | null;
             [key: string]: unknown;
         };
     }
