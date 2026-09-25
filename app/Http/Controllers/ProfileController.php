@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Profile;
+use App\Services\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Request;
@@ -17,6 +18,8 @@ class ProfileController extends Controller
      * The session key that stores the currently selected profile id.
      */
     protected const string SESSION_KEY = 'active_profile_id';
+
+    public function __construct(protected AuditLogger $audit) {}
 
     /**
      * Display the profile picker.
@@ -60,7 +63,9 @@ class ProfileController extends Controller
             'role' => 'required|in:staff,supervisor,administrator',
         ]);
 
-        Profile::create($data);
+        $profile = Profile::create($data);
+
+        $this->audit->record($profile, 'create', null, $this->snapshot($profile));
 
         return Redirect::back();
     }
@@ -72,6 +77,8 @@ class ProfileController extends Controller
     {
         $profile = Profile::query()->findSole($id);
 
+        $before = $this->snapshot($profile);
+
         $data = Request::all();
 
         $data = Validator::validate($data, [
@@ -80,6 +87,8 @@ class ProfileController extends Controller
         ]);
 
         $profile->update($data);
+
+        $this->audit->record($profile, 'update', $before, $this->snapshot($profile));
 
         return Redirect::back();
     }
@@ -91,7 +100,11 @@ class ProfileController extends Controller
     {
         $profile = Profile::query()->findSole($id);
 
+        $before = $this->snapshot($profile);
+
         $profile->delete();
+
+        $this->audit->record($profile, 'delete', $before, null);
 
         return Redirect::back();
     }
@@ -104,5 +117,18 @@ class ProfileController extends Controller
         Session::forget(static::SESSION_KEY);
 
         return Redirect::to('/');
+    }
+
+    /**
+     * The auditable representation of a profile.
+     *
+     * @return array<string, mixed>
+     */
+    protected function snapshot(Profile $profile): array
+    {
+        return [
+            'name' => $profile->name,
+            'role' => $profile->role,
+        ];
     }
 }
