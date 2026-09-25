@@ -20,6 +20,11 @@ const navItems: NavItem[] = [
     { label: 'Dashboard', href: '/dashboard' },
     { label: 'Suppliers', href: '/suppliers', roles: ['administrator'] },
     { label: 'Items', href: '/items', roles: ['administrator'] },
+    {
+        label: 'Supplier Items',
+        href: '/supplier-items',
+        roles: ['administrator'],
+    },
 ];
 
 export default function AppLayout({ title, children }: AppLayoutProps) {
