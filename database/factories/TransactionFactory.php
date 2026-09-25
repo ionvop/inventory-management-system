@@ -2,9 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Models\Item;
 use App\Models\Transaction;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -20,11 +18,19 @@ class TransactionFactory extends Factory
     public function definition(): array
     {
         return [
-            'item_id' => Item::factory(),
-            'user_id' => User::factory(),
-            'movement' => fake()->randomElement(['in', 'out']),
-            'quantity' => fake()->numberBetween(1, 100),
-            'posted_at' => now(),
+            'period_id' => 1,
+            'supplier_item_id' => 1,
+            'batch_id' => null,
+            'type' => 'received',
+            'quantity' => 1,
+            'unit_cost' => 0,
+            'total_cost' => 0,
+            'transaction_date' => now()->toDateString(),
+            'profile_id' => 1,
+            'ward_id' => null,
+            'remark' => null,
+            'override_reason' => null,
+            'reverses_transaction_id' => null,
         ];
     }
 }
