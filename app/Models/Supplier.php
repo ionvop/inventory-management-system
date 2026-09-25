@@ -5,6 +5,7 @@ namespace App\Models;
 use Database\Factories\SupplierFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -48,5 +49,15 @@ class Supplier extends Model
     public function supplierItems(): HasMany
     {
         return $this->hasMany(SupplierItem::class);
+    }
+
+    /**
+     * Limit the query to suppliers that are currently active.
+     *
+     * @param  Builder<Supplier>  $query
+     */
+    public function scopeActive(Builder $query): void
+    {
+        $query->where('active', true);
     }
 }
