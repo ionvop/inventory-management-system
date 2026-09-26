@@ -41,22 +41,71 @@ class BalanceService
             ->where('period_id', $periodId)
             ->get();
 
-        $quantity = 0.0;
-        $totalCost = 0.0;
+        $runningQuantity = 0.0;
+        $runningCost = 0.0;
 
         foreach ($transactions as $transaction) {
-            if (in_array($transaction->type, static::INCREASING_TYPES)) {
-                $quantity += $transaction->quantity;
-                $totalCost += $transaction->total_cost;
-            } elseif (in_array($transaction->type, static::DECREASING_TYPES)) {
-                $quantity -= $transaction->quantity;
-                $totalCost -= $transaction->total_cost;
+            // Decimal casts return strings in PHP, so convert before arithmetic.
+            $quantity = (float) $transaction->quantity;
+            $totalCost = (float) $transaction->total_cost;
+
+            if (in_array($transaction->type, static::INCREASING_TYPES, true)) {
+                $runningQuantity += $quantity;
+                $runningCost += $totalCost;
+            } elseif (in_array($transaction->type, static::DECREASING_TYPES, true)) {
+                $runningQuantity -= $quantity;
+                $runningCost -= $totalCost;
             }
         }
 
         return [
-            'quantity' => round($quantity, 2),
-            'total_cost' => round($totalCost, 2),
+            'quantity' => round($runningQuantity, 2),
+            'total_cost' => round($runningCost, 2),
+        ];
+    }
+
+    /**
+     * The signed quantity a movement type contributes to a balance.
+     *
+     * Increasing types add, decreasing types subtract (FR-5.1). This is the
+     * single place the sign convention lives, so callers never re-implement
+     * the formula (NFR-5.2).
+     */
+    public function signedQuantity(string $type, float $quantity): float
+    {
+        if (in_array($type, static::INCREASING_TYPES, true)) {
+            return $quantity;
+        }
+
+        if (in_array($type, static::DECREASING_TYPES, true)) {
+            return -$quantity;
+        }
+
+        return 0.0;
+    }
+
+    /**
+     * Compute the balance a supplier item would have after a proposed movement.
+     *
+     * Used to reject a transaction that would drive the running quantity below
+     * zero (FR-4.3) before it is persisted.
+     *
+     * @return array{quantity: float, total_cost: float}
+     */
+    public function projectedBalance(
+        int $supplierItemId,
+        int $periodId,
+        string $type,
+        float $quantity,
+        float $unitCost,
+    ): array {
+        $balance = $this->balanceFor($supplierItemId, $periodId);
+
+        $sign = $this->signedQuantity($type, 1.0);
+
+        return [
+            'quantity' => round($balance['quantity'] + ($sign * $quantity), 2),
+            'total_cost' => round($balance['total_cost'] + ($sign * $quantity * $unitCost), 2),
         ];
     }
 
