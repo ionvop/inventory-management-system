@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ItemController;
+use App\Http\Controllers\PeriodController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SupplierItemController;
 use App\Http\Controllers\TransactionController;
@@ -20,6 +21,17 @@ Route::middleware('active-profile')->group(function () {
     // immutable once saved, so there are no update or delete routes (FR-4.4).
     Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
     Route::post('/transactions', [TransactionController::class, 'store'])->name('transactions.store');
+
+    // Period closing is a supervisor/administrator action (FR-6.2); reopening
+    // a closed period is restricted to administrators (FR-6.4).
+    Route::middleware('role:supervisor,administrator')->group(function () {
+        Route::get('/periods', [PeriodController::class, 'index'])->name('periods.index');
+        Route::post('/periods/{id}/close', [PeriodController::class, 'close'])->name('periods.close');
+    });
+
+    Route::middleware('role:administrator')->group(function () {
+        Route::post('/periods/{id}/reopen', [PeriodController::class, 'reopen'])->name('periods.reopen');
+    });
 
     // Catalog management is restricted to administrators (FR-2.1, FR-2.2).
     Route::middleware('role:administrator')->group(function () {
