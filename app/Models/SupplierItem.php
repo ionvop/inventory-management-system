@@ -16,7 +16,7 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $supplier_id
  * @property int $item_id
- * @property float $price
+ * @property string $price
  * @property Carbon $effective_date
  * @property bool $active
  * @property Carbon|null $created_at
