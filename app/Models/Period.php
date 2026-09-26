@@ -49,4 +49,23 @@ class Period extends Model
     {
         return $this->hasMany(Transaction::class);
     }
+
+    /**
+     * Resolve the period a given date falls into, creating it when absent.
+     *
+     * Transactions are organised into monthly periods (FR-6.1). Until period
+     * management is built, the period for a transaction is derived from its
+     * date, so recording a transaction in a new month opens that month's
+     * period automatically.
+     */
+    public static function forDate(Carbon $date): self
+    {
+        return static::query()->firstOrCreate(
+            [
+                'year' => (int) $date->format('Y'),
+                'month' => (int) $date->format('n'),
+            ],
+            ['status' => 'open'],
+        );
+    }
 }
