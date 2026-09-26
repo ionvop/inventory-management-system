@@ -16,9 +16,9 @@ use Illuminate\Support\Carbon;
  * @property int $supplier_item_id
  * @property int|null $batch_id
  * @property string $type
- * @property float $quantity
- * @property float $unit_cost
- * @property float $total_cost
+ * @property string $quantity
+ * @property string $unit_cost
+ * @property string $total_cost
  * @property Carbon $transaction_date
  * @property int $profile_id
  * @property int|null $ward_id
@@ -65,6 +65,20 @@ class Transaction extends Model
     }
 
     /**
+     * Store the transaction date as a plain date, without a time component.
+     *
+     * The default date cast serialises through the model's date format, which
+     * would persist "2026-01-05 00:00:00" into a DATE column. Normalising here
+     * keeps raw comparisons and assertions on the column predictable.
+     */
+    public function setTransactionDateAttribute(mixed $value): void
+    {
+        $this->attributes['transaction_date'] = $value === null
+            ? null
+            : Carbon::parse($value)->toDateString();
+    }
+
+    /**
      * The supplier item this transaction moves stock for.
      *
      * @return BelongsTo<SupplierItem, $this>
@@ -82,5 +96,25 @@ class Transaction extends Model
     public function profile(): BelongsTo
     {
         return $this->belongsTo(Profile::class);
+    }
+
+    /**
+     * The batch this transaction moved stock from, when applicable.
+     *
+     * @return BelongsTo<Batch, $this>
+     */
+    public function batch(): BelongsTo
+    {
+        return $this->belongsTo(Batch::class);
+    }
+
+    /**
+     * The ward this transaction is attributed to, when applicable.
+     *
+     * @return BelongsTo<Ward, $this>
+     */
+    public function ward(): BelongsTo
+    {
+        return $this->belongsTo(Ward::class);
     }
 }
