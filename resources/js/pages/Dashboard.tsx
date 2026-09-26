@@ -13,6 +13,20 @@ export default function Dashboard() {
                 workspace is ready for the next increment.
             </p>
 
+            <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                <Link
+                    href="/transactions"
+                    className="rounded-lg border border-border bg-card p-4 transition-colors hover:bg-muted"
+                >
+                    <h2 className="text-sm font-semibold text-foreground">
+                        Transactions
+                    </h2>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                        Record stock in/out movements and view live balances.
+                    </p>
+                </Link>
+            </div>
+
             {isAdministrator && (
                 <div className="mt-8 grid gap-4 sm:grid-cols-2">
                     <Link
