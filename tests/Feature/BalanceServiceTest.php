@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Period;
+use App\Models\PeriodBalance;
 use App\Models\Profile;
 use App\Models\SupplierItem;
 use App\Models\Transaction;
@@ -158,4 +160,77 @@ test('projected balance subtracts a decreasing movement from the current balance
 
     expect($projected['quantity'])->toBe(6.0);
     expect($projected['total_cost'])->toBe(600.0);
+});
+
+test('a period begins from the previous period ending snapshot', function () {
+    $supplierItem = SupplierItem::factory()->create(['price' => 100, 'effective_date' => '2026-01-01']);
+    $profile = Profile::factory()->create();
+
+    $january = Period::factory()->create(['year' => 2026, 'month' => 1]);
+    $february = Period::factory()->create(['year' => 2026, 'month' => 2]);
+
+    PeriodBalance::factory()->create([
+        'period_id' => $january->id,
+        'supplier_item_id' => $supplierItem->id,
+        'beginning_quantity' => 0,
+        'beginning_cost' => 0,
+        'ending_quantity' => 7,
+        'ending_cost' => 700,
+    ]);
+
+    Transaction::factory()->create([
+        'period_id' => $february->id,
+        'supplier_item_id' => $supplierItem->id,
+        'type' => 'consumption',
+        'quantity' => 2,
+        'total_cost' => 200,
+        'transaction_date' => '2026-02-05',
+        'profile_id' => $profile->id,
+    ]);
+
+    $service = new BalanceService;
+
+    expect($service->beginningBalanceFor($supplierItem->id, $february->id)['quantity'])->toBe(7.0);
+    expect($service->balanceFor($supplierItem->id, $february->id)['quantity'])->toBe(5.0);
+    expect($service->balanceFor($supplierItem->id, $february->id)['total_cost'])->toBe(500.0);
+});
+
+test('a period with no preceding snapshot begins at zero', function () {
+    $supplierItem = SupplierItem::factory()->create(['price' => 100, 'effective_date' => '2026-01-01']);
+    $period = Period::factory()->create(['year' => 2026, 'month' => 3]);
+
+    $beginning = (new BalanceService)->beginningBalanceFor($supplierItem->id, $period->id);
+
+    expect($beginning['quantity'])->toBe(0.0);
+    expect($beginning['total_cost'])->toBe(0.0);
+});
+
+test('carried-forward balance counts toward the negative-balance check', function () {
+    $supplierItem = SupplierItem::factory()->create(['price' => 100, 'effective_date' => '2026-01-01']);
+    $profile = Profile::factory()->create();
+
+    $january = Period::factory()->create(['year' => 2026, 'month' => 1]);
+    $february = Period::factory()->create(['year' => 2026, 'month' => 2]);
+
+    PeriodBalance::factory()->create([
+        'period_id' => $january->id,
+        'supplier_item_id' => $supplierItem->id,
+        'ending_quantity' => 3,
+        'ending_cost' => 300,
+    ]);
+
+    Transaction::factory()->create([
+        'period_id' => $february->id,
+        'supplier_item_id' => $supplierItem->id,
+        'type' => 'consumption',
+        'quantity' => 5,
+        'total_cost' => 500,
+        'transaction_date' => '2026-02-05',
+        'profile_id' => $profile->id,
+    ]);
+
+    $negatives = (new BalanceService)->negativeBalances($february->id);
+
+    expect($negatives)->toHaveKey($supplierItem->id);
+    expect($negatives[$supplierItem->id]['quantity'])->toBe(-2.0);
 });
