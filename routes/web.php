@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BatchController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\PeriodController;
 use App\Http\Controllers\SupplierController;
@@ -21,6 +22,10 @@ Route::middleware('active-profile')->group(function () {
     // immutable once saved, so there are no update or delete routes (FR-4.4).
     Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
     Route::post('/transactions', [TransactionController::class, 'store'])->name('transactions.store');
+
+    // The near-expiry / expired batch dashboard is available to every role,
+    // since staff perform the pull-outs (FR-3.3).
+    Route::get('/batches', [BatchController::class, 'index'])->name('batches.index');
 
     // Period closing is a supervisor/administrator action (FR-6.2); reopening
     // a closed period is restricted to administrators (FR-6.4).
