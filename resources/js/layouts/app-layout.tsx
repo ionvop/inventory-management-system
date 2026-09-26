@@ -18,6 +18,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
     { label: 'Dashboard', href: '/dashboard' },
+    { label: 'Transactions', href: '/transactions' },
     { label: 'Suppliers', href: '/suppliers', roles: ['administrator'] },
     { label: 'Items', href: '/items', roles: ['administrator'] },
     {
