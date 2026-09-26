@@ -3,6 +3,7 @@
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SupplierItemController;
+use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', 'App\Http\Controllers\ProfileController@index')->name('profiles.index');
@@ -14,6 +15,11 @@ Route::post('/logout', 'App\Http\Controllers\ProfileController@logout')->name('p
 
 Route::middleware('active-profile')->group(function () {
     Route::inertia('/dashboard', 'Dashboard')->name('dashboard');
+
+    // Stock movements are recorded by any role (FR-4.1). Transactions are
+    // immutable once saved, so there are no update or delete routes (FR-4.4).
+    Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
+    Route::post('/transactions', [TransactionController::class, 'store'])->name('transactions.store');
 
     // Catalog management is restricted to administrators (FR-2.1, FR-2.2).
     Route::middleware('role:administrator')->group(function () {
