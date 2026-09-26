@@ -39,6 +39,20 @@ class Batch extends Model
     }
 
     /**
+     * Store the expiration date as a plain date, without a time component.
+     *
+     * The default date cast serialises through the model's date format, which
+     * would persist "2026-12-31 00:00:00" into a DATE column. Normalising here
+     * keeps raw comparisons and assertions on the column predictable.
+     */
+    public function setExpirationDateAttribute(mixed $value): void
+    {
+        $this->attributes['expiration_date'] = $value === null
+            ? null
+            : Carbon::parse($value)->toDateString();
+    }
+
+    /**
      * The supplier item this batch belongs to.
      *
      * @return BelongsTo<SupplierItem, $this>
