@@ -5,6 +5,7 @@ namespace App\Models;
 use Database\Factories\BatchFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -25,6 +26,14 @@ class Batch extends Model
 {
     /** @use HasFactory<BatchFactory> */
     use HasFactory;
+
+    public const STATUS_ACTIVE = 'active';
+
+    public const STATUS_NEAR_EXPIRY = 'near_expiry';
+
+    public const STATUS_EXPIRED = 'expired';
+
+    public const STATUS_DAMAGED = 'damaged';
 
     /**
      * Get the attributes that should be cast.
@@ -50,6 +59,85 @@ class Batch extends Model
         $this->attributes['expiration_date'] = $value === null
             ? null
             : Carbon::parse($value)->toDateString();
+    }
+
+    /**
+     * The effective expiry status of the batch (FR-3.2).
+     *
+     * A batch manually flagged as damaged keeps that status. Otherwise the
+     * status is derived from the expiration date and the configured near-expiry
+     * threshold, so it stays correct without a scheduled job (NFR-3.1).
+     */
+    public function expiryStatus(): string
+    {
+        if ($this->status === self::STATUS_DAMAGED) {
+            return self::STATUS_DAMAGED;
+        }
+
+        $days = $this->daysUntilExpiry();
+
+        if ($days < 0) {
+            return self::STATUS_EXPIRED;
+        }
+
+        if ($days <= $this->nearExpiryDays()) {
+            return self::STATUS_NEAR_EXPIRY;
+        }
+
+        return self::STATUS_ACTIVE;
+    }
+
+    /**
+     * The number of whole days until the batch expires (negative once past).
+     */
+    public function daysUntilExpiry(): int
+    {
+        return (int) Carbon::today()->diffInDays(
+            $this->expiration_date->copy()->startOfDay(),
+            false,
+        );
+    }
+
+    /**
+     * The configured near-expiry threshold in days (FR-3.2).
+     */
+    public function nearExpiryDays(): int
+    {
+        return (int) config('inventory.near_expiry_days');
+    }
+
+    /**
+     * Scope to batches that are near expiry but not yet expired.
+     *
+     * @param  Builder<Batch>  $query
+     */
+    public function scopeNearExpiry(Builder $query): void
+    {
+        $query->where('status', '!=', self::STATUS_DAMAGED)
+            ->whereDate('expiration_date', '>=', Carbon::today())
+            ->whereDate('expiration_date', '<=', Carbon::today()->addDays($this->nearExpiryDays()));
+    }
+
+    /**
+     * Scope to batches whose expiration date has passed.
+     *
+     * @param  Builder<Batch>  $query
+     */
+    public function scopeExpired(Builder $query): void
+    {
+        $query->where('status', '!=', self::STATUS_DAMAGED)
+            ->whereDate('expiration_date', '<', Carbon::today());
+    }
+
+    /**
+     * Scope to batches expiring within the given number of days.
+     *
+     * @param  Builder<Batch>  $query
+     */
+    public function scopeExpiringWithin(Builder $query, int $days): void
+    {
+        $query->whereDate('expiration_date', '>=', Carbon::today())
+            ->whereDate('expiration_date', '<=', Carbon::today()->addDays($days));
     }
 
     /**
