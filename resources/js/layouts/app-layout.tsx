@@ -1,6 +1,7 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import {
     ArrowLeftRight,
+    CalendarClock,
     LayoutDashboard,
     Menu,
     Package,
@@ -30,6 +31,12 @@ interface NavItem {
 const navItems: NavItem[] = [
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { label: 'Transactions', href: '/transactions', icon: ArrowLeftRight },
+    {
+        label: 'Periods',
+        href: '/periods',
+        icon: CalendarClock,
+        roles: ['supervisor', 'administrator'],
+    },
     {
         label: 'Suppliers',
         href: '/suppliers',
