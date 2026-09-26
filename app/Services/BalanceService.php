@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\Period;
+use App\Models\PeriodBalance;
 use App\Models\Transaction;
 
 /**
@@ -11,6 +13,10 @@ use App\Models\Transaction;
  * (NFR-3.1) and never stored as an independently editable field. This is the
  * single source of truth for the balance formula (FR-5.1) and must not be
  * duplicated in the frontend (NFR-5.2).
+ *
+ * A period's balance starts from the beginning balance carried forward from
+ * the previous period's close snapshot (FR-6.2c), then applies the movements
+ * recorded within the period.
  */
 class BalanceService
 {
@@ -32,17 +38,23 @@ class BalanceService
     /**
      * Compute the running balance for a supplier item within a period.
      *
+     * The balance begins with the amount carried forward from the previous
+     * period's close snapshot (FR-6.2c), then applies every movement recorded
+     * within the period (FR-5.1).
+     *
      * @return array{quantity: float, total_cost: float}
      */
     public function balanceFor(int $supplierItemId, int $periodId): array
     {
+        $beginning = $this->beginningBalanceFor($supplierItemId, $periodId);
+
         $transactions = Transaction::query()
             ->where('supplier_item_id', $supplierItemId)
             ->where('period_id', $periodId)
             ->get();
 
-        $runningQuantity = 0.0;
-        $runningCost = 0.0;
+        $runningQuantity = $beginning['quantity'];
+        $runningCost = $beginning['total_cost'];
 
         foreach ($transactions as $transaction) {
             // Decimal casts return strings in PHP, so convert before arithmetic.
@@ -61,6 +73,44 @@ class BalanceService
         return [
             'quantity' => round($runningQuantity, 2),
             'total_cost' => round($runningCost, 2),
+        ];
+    }
+
+    /**
+     * The beginning balance carried forward into a period (FR-6.2c).
+     *
+     * This is the previous period's ending snapshot for the supplier item. A
+     * period with no preceding snapshot starts from zero, so the first live
+     * period behaves exactly as before.
+     *
+     * @return array{quantity: float, total_cost: float}
+     */
+    public function beginningBalanceFor(int $supplierItemId, int $periodId): array
+    {
+        $period = Period::query()->find($periodId);
+
+        if (! $period instanceof Period) {
+            return ['quantity' => 0.0, 'total_cost' => 0.0];
+        }
+
+        $previous = $period->previous();
+
+        if (! $previous instanceof Period) {
+            return ['quantity' => 0.0, 'total_cost' => 0.0];
+        }
+
+        $snapshot = PeriodBalance::query()
+            ->where('period_id', $previous->id)
+            ->where('supplier_item_id', $supplierItemId)
+            ->first();
+
+        if (! $snapshot instanceof PeriodBalance) {
+            return ['quantity' => 0.0, 'total_cost' => 0.0];
+        }
+
+        return [
+            'quantity' => round((float) $snapshot->ending_quantity, 2),
+            'total_cost' => round((float) $snapshot->ending_cost, 2),
         ];
     }
 
