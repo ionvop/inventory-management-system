@@ -4,6 +4,8 @@ import AppLayout from '@/layouts/app-layout';
 export default function Dashboard() {
     const { activeProfile } = usePage().props;
     const isAdministrator = activeProfile?.role === 'administrator';
+    const canManagePeriods =
+        activeProfile?.role === 'supervisor' || isAdministrator;
 
     return (
         <AppLayout title="Dashboard">
@@ -25,6 +27,19 @@ export default function Dashboard() {
                         Record stock in/out movements and view live balances.
                     </p>
                 </Link>
+                {canManagePeriods && (
+                    <Link
+                        href="/periods"
+                        className="rounded-lg border border-border bg-card p-4 transition-colors hover:bg-muted"
+                    >
+                        <h2 className="text-sm font-semibold text-foreground">
+                            Periods
+                        </h2>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                            Close a month and carry balances forward.
+                        </p>
+                    </Link>
+                )}
             </div>
 
             {isAdministrator && (
