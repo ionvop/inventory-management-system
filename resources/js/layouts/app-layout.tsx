@@ -5,6 +5,7 @@ import {
     LayoutDashboard,
     Menu,
     Package,
+    PackageSearch,
     Tags,
     Truck,
     X,
@@ -31,6 +32,7 @@ interface NavItem {
 const navItems: NavItem[] = [
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { label: 'Transactions', href: '/transactions', icon: ArrowLeftRight },
+    { label: 'Batches', href: '/batches', icon: PackageSearch },
     {
         label: 'Periods',
         href: '/periods',
