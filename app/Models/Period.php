@@ -51,6 +51,38 @@ class Period extends Model
     }
 
     /**
+     * The frozen per-supplier-item balance snapshots taken at close (FR-6.2b).
+     *
+     * @return HasMany<PeriodBalance, $this>
+     */
+    public function balances(): HasMany
+    {
+        return $this->hasMany(PeriodBalance::class);
+    }
+
+    /**
+     * The period immediately preceding this one, if it exists.
+     *
+     * Periods are ordered by year then month, so the previous period is the
+     * greatest (year, month) strictly before this one. Used to carry a closed
+     * period's ending balance forward as the next period's beginning (FR-6.2c).
+     */
+    public function previous(): ?self
+    {
+        return static::query()
+            ->where(function ($query) {
+                $query->where('year', '<', $this->year)
+                    ->orWhere(function ($query) {
+                        $query->where('year', $this->year)
+                            ->where('month', '<', $this->month);
+                    });
+            })
+            ->orderByDesc('year')
+            ->orderByDesc('month')
+            ->first();
+    }
+
+    /**
      * Resolve the period a given date falls into, creating it when absent.
      *
      * Transactions are organised into monthly periods (FR-6.1). Until period
