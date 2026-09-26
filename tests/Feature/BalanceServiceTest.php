@@ -108,3 +108,54 @@ test('reports negative balances for a period', function () {
     expect($negatives)->toHaveKey($supplierItem->id);
     expect($negatives[$supplierItem->id]['quantity'])->toBe(-5.0);
 });
+
+test('signed quantity applies the correct sign per movement type', function () {
+    $service = new BalanceService;
+
+    expect($service->signedQuantity('received', 10.0))->toBe(10.0);
+    expect($service->signedQuantity('return_from_ward', 10.0))->toBe(10.0);
+    expect($service->signedQuantity('consumption', 10.0))->toBe(-10.0);
+    expect($service->signedQuantity('return_to_supplier', 10.0))->toBe(-10.0);
+    expect($service->signedQuantity('transfer_to_pharmacy', 10.0))->toBe(-10.0);
+    expect($service->signedQuantity('write_off', 10.0))->toBe(-10.0);
+});
+
+test('projected balance adds an increasing movement to the current balance', function () {
+    $supplierItem = SupplierItem::factory()->create(['price' => 100, 'effective_date' => '2026-01-01']);
+    $profile = Profile::factory()->create();
+
+    Transaction::factory()->create([
+        'period_id' => 1,
+        'supplier_item_id' => $supplierItem->id,
+        'type' => 'received',
+        'quantity' => 10,
+        'total_cost' => 1000,
+        'transaction_date' => '2026-01-05',
+        'profile_id' => $profile->id,
+    ]);
+
+    $projected = (new BalanceService)->projectedBalance($supplierItem->id, 1, 'received', 5, 100);
+
+    expect($projected['quantity'])->toBe(15.0);
+    expect($projected['total_cost'])->toBe(1500.0);
+});
+
+test('projected balance subtracts a decreasing movement from the current balance', function () {
+    $supplierItem = SupplierItem::factory()->create(['price' => 100, 'effective_date' => '2026-01-01']);
+    $profile = Profile::factory()->create();
+
+    Transaction::factory()->create([
+        'period_id' => 1,
+        'supplier_item_id' => $supplierItem->id,
+        'type' => 'received',
+        'quantity' => 10,
+        'total_cost' => 1000,
+        'transaction_date' => '2026-01-05',
+        'profile_id' => $profile->id,
+    ]);
+
+    $projected = (new BalanceService)->projectedBalance($supplierItem->id, 1, 'consumption', 4, 100);
+
+    expect($projected['quantity'])->toBe(6.0);
+    expect($projected['total_cost'])->toBe(600.0);
+});
