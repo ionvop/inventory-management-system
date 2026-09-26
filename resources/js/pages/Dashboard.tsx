@@ -27,6 +27,17 @@ export default function Dashboard() {
                         Record stock in/out movements and view live balances.
                     </p>
                 </Link>
+                <Link
+                    href="/batches"
+                    className="rounded-lg border border-border bg-card p-4 transition-colors hover:bg-muted"
+                >
+                    <h2 className="text-sm font-semibold text-foreground">
+                        Batch expiry
+                    </h2>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                        Identify near-expiry and expired stock for pull-out.
+                    </p>
+                </Link>
                 {canManagePeriods && (
                     <Link
                         href="/periods"
