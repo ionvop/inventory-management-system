@@ -3,6 +3,7 @@
 use App\Http\Controllers\BatchController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\PeriodController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SupplierItemController;
 use App\Http\Controllers\TransactionController;
@@ -39,6 +40,10 @@ Route::middleware('active-profile')->group(function () {
     Route::middleware('role:supervisor,administrator')->group(function () {
         Route::get('/periods', [PeriodController::class, 'index'])->name('periods.index');
         Route::post('/periods/{id}/close', [PeriodController::class, 'close'])->name('periods.close');
+
+        // The monthly report is a supervisor/administrator activity, matching
+        // period closing, since it carries the department's sign-off (FR-7.1).
+        Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
     });
 
     Route::middleware('role:administrator')->group(function () {
