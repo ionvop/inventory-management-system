@@ -51,6 +51,19 @@ export default function Dashboard() {
                         </p>
                     </Link>
                 )}
+                {canManagePeriods && (
+                    <Link
+                        href="/reports"
+                        className="rounded-lg border border-border bg-card p-4 transition-colors hover:bg-muted"
+                    >
+                        <h2 className="text-sm font-semibold text-foreground">
+                            Monthly report
+                        </h2>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                            View the monthly stock report grouped by supplier.
+                        </p>
+                    </Link>
+                )}
             </div>
 
             {isAdministrator && (
