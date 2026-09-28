@@ -2,6 +2,7 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import {
     ArrowLeftRight,
     CalendarClock,
+    FileText,
     LayoutDashboard,
     Menu,
     Package,
@@ -37,6 +38,12 @@ const navItems: NavItem[] = [
         label: 'Periods',
         href: '/periods',
         icon: CalendarClock,
+        roles: ['supervisor', 'administrator'],
+    },
+    {
+        label: 'Reports',
+        href: '/reports',
+        icon: FileText,
         roles: ['supervisor', 'administrator'],
     },
     {
