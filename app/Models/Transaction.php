@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 
 /**
@@ -116,5 +117,45 @@ class Transaction extends Model
     public function ward(): BelongsTo
     {
         return $this->belongsTo(Ward::class);
+    }
+
+    /**
+     * The original transaction this row reverses, when this is a reversal.
+     *
+     * Corrections are made by posting a reversing transaction that references
+     * the original rather than editing it, so the audit trail is preserved
+     * (FR-4.4).
+     *
+     * @return BelongsTo<Transaction, $this>
+     */
+    public function reversesTransaction(): BelongsTo
+    {
+        return $this->belongsTo(Transaction::class, 'reverses_transaction_id');
+    }
+
+    /**
+     * The reversal transaction that cancels this one, when it has been reversed.
+     *
+     * @return HasOne<Transaction, $this>
+     */
+    public function reversedBy(): HasOne
+    {
+        return $this->hasOne(Transaction::class, 'reverses_transaction_id');
+    }
+
+    /**
+     * Whether this transaction has already been reversed (FR-4.4).
+     */
+    public function isReversed(): bool
+    {
+        return $this->reversedBy()->exists();
+    }
+
+    /**
+     * Whether this transaction is itself a reversal of another transaction.
+     */
+    public function isReversal(): bool
+    {
+        return $this->reverses_transaction_id !== null;
     }
 }
