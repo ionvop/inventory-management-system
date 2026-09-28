@@ -92,6 +92,7 @@ class TransactionController extends Controller
                 : null,
             'recentTransactions' => $this->recentTransactions(),
             'canOverride' => $this->actingProfile()?->role === 'administrator',
+            'canReverse' => $this->actingProfile()?->role === 'administrator',
         ]);
     }
 
@@ -214,6 +215,121 @@ class TransactionController extends Controller
     }
 
     /**
+     * Reverse a previously recorded transaction (FR-4.4).
+     *
+     * Transactions are immutable, so a correction is made by posting a new
+     * reversing transaction that references the original rather than editing
+     * it. The reversal carries the same type, quantity, unit cost and supplier
+     * item as the original, so the two net to zero in the balance. It is dated
+     * today and lands in the current open period, leaving any closed period
+     * frozen. Only administrators may reverse, since it is a high-impact
+     * correction (NFR-2.2).
+     */
+    public function reverse(int $id): RedirectResponse
+    {
+        $original = Transaction::query()->findSole($id);
+
+        // A reversal cannot itself be reversed, and a transaction can only be
+        // reversed once, so the ledger stays a clean original/reversal pair.
+        if ($original->isReversal()) {
+            return Redirect::back()->withErrors([
+                'transaction' => 'A reversal transaction cannot be reversed.',
+            ]);
+        }
+
+        if ($original->isReversed()) {
+            return Redirect::back()->withErrors([
+                'transaction' => 'This transaction has already been reversed.',
+            ]);
+        }
+
+        $data = Validator::validate(Request::all(), [
+            'remark' => 'required|string|max:255',
+            'override_reason' => 'nullable|string|max:255',
+        ]);
+
+        $date = Carbon::today();
+        $period = Period::forDate($date);
+
+        // FR-6.2a: a closed period is frozen against further edits.
+        if ($period->status === 'closed') {
+            return Redirect::back()->withErrors([
+                'transaction' => 'The current period is closed and cannot accept a reversal.',
+            ]);
+        }
+
+        $profile = $this->actingProfile();
+        $quantity = (float) $original->quantity;
+        $unitCost = (float) $original->unit_cost;
+
+        // FR-4.3: cancelling a movement can also drive the balance below zero,
+        // so the same override rules apply to a reversal.
+        $projected = $this->balances->projectedBalance(
+            $original->supplier_item_id,
+            $period->id,
+            $original->type,
+            $quantity,
+            $unitCost,
+            true,
+        );
+
+        if ($projected['quantity'] < 0) {
+            $overrideReason = trim((string) ($data['override_reason'] ?? ''));
+
+            if ($profile?->role !== 'administrator') {
+                return Redirect::back()->withErrors([
+                    'transaction' => 'This reversal would drive the balance below zero. Only an administrator can override.',
+                ]);
+            }
+
+            if ($overrideReason === '') {
+                return Redirect::back()->withErrors([
+                    'override_reason' => 'An override reason is required to allow a negative balance.',
+                ]);
+            }
+        }
+
+        DB::transaction(function () use ($original, $period, $profile, $data, $quantity, $unitCost) {
+            $reversal = Transaction::create([
+                'period_id' => $period->id,
+                'supplier_item_id' => $original->supplier_item_id,
+                'batch_id' => $original->batch_id,
+                'type' => $original->type,
+                'quantity' => $quantity,
+                'unit_cost' => $unitCost,
+                'total_cost' => round($quantity * $unitCost, 2),
+                'transaction_date' => now()->toDateString(),
+                'profile_id' => $profile?->id,
+                'ward_id' => $original->ward_id,
+                'remark' => $data['remark'],
+                'override_reason' => $data['override_reason'] ?? null,
+                'reverses_transaction_id' => $original->id,
+            ]);
+
+            $this->audit->record($reversal, 'reverse', null, [
+                'period_id' => $reversal->period_id,
+                'supplier_item_id' => $reversal->supplier_item_id,
+                'batch_id' => $reversal->batch_id,
+                'type' => $reversal->type,
+                'quantity' => $reversal->quantity,
+                'unit_cost' => $reversal->unit_cost,
+                'total_cost' => $reversal->total_cost,
+                'transaction_date' => $reversal->transaction_date->toDateString(),
+                'remark' => $reversal->remark,
+                'reverses_transaction_id' => $reversal->reverses_transaction_id,
+            ]);
+
+            $this->audit->record($original, 'reverse', [
+                'reversed_by_transaction_id' => null,
+            ], [
+                'reversed_by_transaction_id' => $reversal->id,
+            ]);
+        });
+
+        return Redirect::back();
+    }
+
+    /**
      * The validation rules for recording a transaction.
      *
      * @return array<string, mixed>
@@ -263,12 +379,14 @@ class TransactionController extends Controller
      *     transaction_date: string,
      *     profile_name: string|null,
      *     ward_name: string|null,
+     *     reverses_transaction_id: int|null,
+     *     is_reversed: bool,
      * }>
      */
     protected function recentTransactions()
     {
         return Transaction::query()
-            ->with(['supplierItem.supplier', 'supplierItem.item', 'profile', 'ward'])
+            ->with(['supplierItem.supplier', 'supplierItem.item', 'profile', 'ward', 'reversedBy'])
             ->orderByDesc('id')
             ->limit(20)
             ->get()
@@ -283,6 +401,8 @@ class TransactionController extends Controller
                 'transaction_date' => $transaction->transaction_date->toDateString(),
                 'profile_name' => $transaction->profile?->name,
                 'ward_name' => $transaction->ward?->name,
+                'reverses_transaction_id' => $transaction->reverses_transaction_id,
+                'is_reversed' => $transaction->reversedBy !== null,
             ]);
     }
 
