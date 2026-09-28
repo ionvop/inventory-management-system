@@ -23,6 +23,13 @@ Route::middleware('active-profile')->group(function () {
     Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
     Route::post('/transactions', [TransactionController::class, 'store'])->name('transactions.store');
 
+    // Corrections are made by posting a reversing transaction that references
+    // the original (FR-4.4). This is a high-impact action, so it is restricted
+    // to administrators (NFR-2.2).
+    Route::middleware('role:administrator')->group(function () {
+        Route::post('/transactions/{id}/reverse', [TransactionController::class, 'reverse'])->name('transactions.reverse');
+    });
+
     // The near-expiry / expired batch dashboard is available to every role,
     // since staff perform the pull-outs (FR-3.3).
     Route::get('/batches', [BatchController::class, 'index'])->name('batches.index');
