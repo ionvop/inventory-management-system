@@ -61,13 +61,16 @@ class BalanceService
             $quantity = (float) $transaction->quantity;
             $totalCost = (float) $transaction->total_cost;
 
-            if (in_array($transaction->type, static::INCREASING_TYPES, true)) {
-                $runningQuantity += $quantity;
-                $runningCost += $totalCost;
-            } elseif (in_array($transaction->type, static::DECREASING_TYPES, true)) {
-                $runningQuantity -= $quantity;
-                $runningCost -= $totalCost;
-            }
+            // A reversal contributes the opposite of the movement it cancels,
+            // so the original and its reversal net to zero (FR-4.4).
+            $sign = $this->signedQuantity(
+                $transaction->type,
+                1.0,
+                $transaction->isReversal(),
+            );
+
+            $runningQuantity += $sign * $quantity;
+            $runningCost += $sign * $totalCost;
         }
 
         return [
@@ -117,28 +120,30 @@ class BalanceService
     /**
      * The signed quantity a movement type contributes to a balance.
      *
-     * Increasing types add, decreasing types subtract (FR-5.1). This is the
-     * single place the sign convention lives, so callers never re-implement
-     * the formula (NFR-5.2).
+     * Increasing types add, decreasing types subtract (FR-5.1). A reversal
+     * contributes the opposite of the movement it cancels, so an original and
+     * its reversal net to zero (FR-4.4). This is the single place the sign
+     * convention lives, so callers never re-implement the formula (NFR-5.2).
      */
-    public function signedQuantity(string $type, float $quantity): float
+    public function signedQuantity(string $type, float $quantity, bool $isReversal = false): float
     {
         if (in_array($type, static::INCREASING_TYPES, true)) {
-            return $quantity;
+            $sign = 1.0;
+        } elseif (in_array($type, static::DECREASING_TYPES, true)) {
+            $sign = -1.0;
+        } else {
+            return 0.0;
         }
 
-        if (in_array($type, static::DECREASING_TYPES, true)) {
-            return -$quantity;
-        }
-
-        return 0.0;
+        return ($isReversal ? -$sign : $sign) * $quantity;
     }
 
     /**
      * Compute the balance a supplier item would have after a proposed movement.
      *
      * Used to reject a transaction that would drive the running quantity below
-     * zero (FR-4.3) before it is persisted.
+     * zero (FR-4.3) before it is persisted. A reversal is checked the same way,
+     * since cancelling a movement can also push a balance negative.
      *
      * @return array{quantity: float, total_cost: float}
      */
@@ -148,10 +153,11 @@ class BalanceService
         string $type,
         float $quantity,
         float $unitCost,
+        bool $isReversal = false,
     ): array {
         $balance = $this->balanceFor($supplierItemId, $periodId);
 
-        $sign = $this->signedQuantity($type, 1.0);
+        $sign = $this->signedQuantity($type, 1.0, $isReversal);
 
         return [
             'quantity' => round($balance['quantity'] + ($sign * $quantity), 2),
