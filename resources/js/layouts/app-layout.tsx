@@ -7,6 +7,7 @@ import {
     Menu,
     Package,
     PackageSearch,
+    ScrollText,
     Tags,
     Truck,
     X,
@@ -62,6 +63,12 @@ const navItems: NavItem[] = [
         label: 'Supplier Items',
         href: '/supplier-items',
         icon: Tags,
+        roles: ['administrator'],
+    },
+    {
+        label: 'Audit log',
+        href: '/audit-logs',
+        icon: ScrollText,
         roles: ['administrator'],
     },
 ];
