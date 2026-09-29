@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\BatchController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\PeriodController;
@@ -51,6 +52,9 @@ Route::middleware('active-profile')->group(function () {
 
     Route::middleware('role:administrator')->group(function () {
         Route::post('/periods/{id}/reopen', [PeriodController::class, 'reopen'])->name('periods.reopen');
+
+        // The audit trail is reviewable by administrators only (FR-8.2).
+        Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
     });
 
     // Catalog management is restricted to administrators (FR-2.1, FR-2.2).
