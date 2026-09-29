@@ -110,3 +110,96 @@ test('any role can view the batch expiry dashboard', function () {
 test('the batch expiry dashboard requires an active profile', function () {
     $this->get(route('batches.index'))->assertRedirect(route('profiles.index'));
 });
+
+test('any role can flag a batch as damaged with a reason', function () {
+    $staff = Profile::factory()->create();
+    $batch = batchExpiringIn(365);
+
+    $response = $this->withSession(['active_profile_id' => $staff->id])
+        ->from(route('batches.index'))
+        ->post(route('batches.damaged', $batch->id), [
+            'damaged_reason' => 'Crushed carton',
+        ]);
+
+    $response->assertRedirect(route('batches.index'));
+    $response->assertSessionHasNoErrors();
+
+    $batch->refresh();
+    expect($batch->status)->toBe(Batch::STATUS_DAMAGED);
+    expect($batch->damaged_reason)->toBe('Crushed carton');
+    expect($batch->expiryStatus())->toBe(Batch::STATUS_DAMAGED);
+
+    $this->assertDatabaseHas('audit_logs', [
+        'auditable_type' => $batch->getMorphClass(),
+        'auditable_id' => $batch->id,
+        'action' => 'damage',
+        'profile_id' => $staff->id,
+    ]);
+});
+
+test('flagging a batch as damaged requires a reason', function () {
+    $staff = Profile::factory()->create();
+    $batch = batchExpiringIn(365);
+
+    $response = $this->withSession(['active_profile_id' => $staff->id])
+        ->from(route('batches.index'))
+        ->post(route('batches.damaged', $batch->id), [
+            'damaged_reason' => '',
+        ]);
+
+    $response->assertSessionHasErrors('damaged_reason');
+
+    $batch->refresh();
+    expect($batch->status)->toBe(Batch::STATUS_ACTIVE);
+    $this->assertDatabaseMissing('audit_logs', ['action' => 'damage']);
+});
+
+test('a batch already flagged as damaged cannot be flagged again', function () {
+    $staff = Profile::factory()->create();
+    $batch = batchExpiringIn(365, [
+        'status' => Batch::STATUS_DAMAGED,
+        'damaged_reason' => 'Original reason',
+    ]);
+
+    $response = $this->withSession(['active_profile_id' => $staff->id])
+        ->from(route('batches.index'))
+        ->post(route('batches.damaged', $batch->id), [
+            'damaged_reason' => 'Second reason',
+        ]);
+
+    $response->assertSessionHasErrors('batch');
+
+    $batch->refresh();
+    expect($batch->damaged_reason)->toBe('Original reason');
+});
+
+test('flagging a batch as damaged requires an active profile', function () {
+    $batch = batchExpiringIn(365);
+
+    $this->post(route('batches.damaged', $batch->id), [
+        'damaged_reason' => 'Crushed carton',
+    ])->assertRedirect(route('profiles.index'));
+});
+
+test('a flagged batch appears in the damaged count with its reason', function () {
+    $staff = Profile::factory()->create();
+    $batch = batchExpiringIn(365);
+
+    $this->withSession(['active_profile_id' => $staff->id])
+        ->from(route('batches.index'))
+        ->post(route('batches.damaged', $batch->id), [
+            'damaged_reason' => 'Crushed carton',
+        ]);
+
+    $response = $this->withSession(['active_profile_id' => $staff->id])
+        ->get(route('batches.index'));
+
+    $response->assertInertia(function ($page) use ($batch) {
+        $page->component('Batches');
+        $page->where('counts.damaged', 1);
+        $page->where('counts.active', 0);
+        $page->where('batches.0.id', $batch->id);
+        $page->where('batches.0.status', Batch::STATUS_DAMAGED);
+        $page->where('batches.0.damaged_reason', 'Crushed carton');
+    });
+});
