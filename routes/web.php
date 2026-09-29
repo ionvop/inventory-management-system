@@ -33,8 +33,10 @@ Route::middleware('active-profile')->group(function () {
     });
 
     // The near-expiry / expired batch dashboard is available to every role,
-    // since staff perform the pull-outs (FR-3.3).
+    // since staff perform the pull-outs (FR-3.3). Flagging a batch as damaged
+    // is likewise open to every role, since it is part of the pull-out.
     Route::get('/batches', [BatchController::class, 'index'])->name('batches.index');
+    Route::post('/batches/{id}/damaged', [BatchController::class, 'flagDamaged'])->name('batches.damaged');
 
     // Period closing is a supervisor/administrator action (FR-6.2); reopening
     // a closed period is restricted to administrators (FR-6.4).
