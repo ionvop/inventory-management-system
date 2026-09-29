@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Batch;
 use App\Models\Period;
 use App\Models\PeriodBalance;
 use App\Models\SupplierItem;
@@ -55,7 +56,8 @@ class ReportService
      *         rows: array<int, array<string, mixed>>,
      *         subtotal: array<string, array{quantity: float, total_cost: float}>
      *     }>,
-     *     grand_total: array<string, array{quantity: float, total_cost: float}>
+     *     grand_total: array<string, array{quantity: float, total_cost: float}>,
+     *     remarks: array<int, string>
      * }
      */
     public function build(Period $period): array
@@ -87,7 +89,196 @@ class ReportService
             ],
             'groups' => $groups,
             'grand_total' => $this->totals($rows),
+            'remarks' => $this->remarks($period),
         ];
+    }
+
+    /**
+     * Build the report at batch granularity for the Excel export (FR-7.3).
+     *
+     * The department's sheet lists one row per (supplier item, batch), so each
+     * supplier item is split into one row per batch that moved in the period,
+     * plus a single row for movements with no batch. Beginning and ending
+     * balances are tracked per supplier item, not per batch, so they are shown
+     * on the first row of each supplier item and zero on the rest; the
+     * per-supplier subtotal therefore still reconciles to the item's balance.
+     *
+     * @return array{
+     *     period: array{id: int, year: int, month: int, status: string},
+     *     groups: array<int, array{
+     *         supplier_id: int|null,
+     *         supplier_name: string|null,
+     *         rows: array<int, array<string, mixed>>,
+     *         subtotal: array<string, array{quantity: float, total_cost: float}>
+     *     }>,
+     *     grand_total: array<string, array{quantity: float, total_cost: float}>,
+     *     remarks: array<int, string>
+     * }
+     */
+    public function buildDetailed(Period $period): array
+    {
+        $rows = collect($this->detailedRows($period));
+
+        $groups = $rows
+            ->groupBy('supplier_id')
+            ->map(function (Collection $group): array {
+                /** @var array<string, mixed> $first */
+                $first = $group->first();
+
+                return [
+                    'supplier_id' => $first['supplier_id'],
+                    'supplier_name' => $first['supplier_name'],
+                    'rows' => $group->values()->all(),
+                    'subtotal' => $this->totals($group),
+                ];
+            })
+            ->values()
+            ->all();
+
+        return [
+            'period' => [
+                'id' => $period->id,
+                'year' => $period->year,
+                'month' => $period->month,
+                'status' => $period->status,
+            ],
+            'groups' => $groups,
+            'grand_total' => $this->totals($rows),
+            'remarks' => $this->remarks($period),
+        ];
+    }
+
+    /**
+     * Build one report row per (supplier item, batch) for the Excel export.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    protected function detailedRows(Period $period): array
+    {
+        $supplierItems = SupplierItem::query()
+            ->with(['supplier', 'item'])
+            ->whereIn('id', $this->supplierItemIds($period))
+            ->get()
+            ->sortBy(fn (SupplierItem $supplierItem): string => sprintf(
+                '%s|%s',
+                $supplierItem->supplier?->name,
+                $supplierItem->item?->code,
+            ))
+            ->values();
+
+        $transactions = Transaction::query()
+            ->with('batch')
+            ->where('period_id', $period->id)
+            ->get()
+            ->groupBy('supplier_item_id');
+
+        $snapshots = $period->status === 'closed'
+            ? PeriodBalance::query()
+                ->where('period_id', $period->id)
+                ->get()
+                ->keyBy('supplier_item_id')
+            : collect();
+
+        $rows = [];
+
+        foreach ($supplierItems as $supplierItem) {
+            /** @var Collection<int, Transaction> $itemTransactions */
+            $itemTransactions = $transactions->get($supplierItem->id, collect());
+
+            $beginning = $this->beginningFor($period, $supplierItem->id, $snapshots);
+            $ending = $this->endingFor($period, $supplierItem->id, $snapshots);
+
+            $batches = $itemTransactions
+                ->map(fn (Transaction $transaction) => $transaction->batch)
+                ->filter()
+                ->unique('id')
+                ->sortBy(fn (Batch $batch): string => sprintf(
+                    '%s|%s',
+                    $batch->expiration_date->toDateString(),
+                    $batch->batch_number,
+                ))
+                ->values();
+
+            $isFirst = true;
+
+            foreach ($batches as $batch) {
+                $batchTransactions = $itemTransactions
+                    ->filter(fn (Transaction $transaction): bool => $transaction->batch_id === $batch->id);
+
+                $rows[] = $this->detailedRow(
+                    $supplierItem,
+                    $batchTransactions,
+                    $batch,
+                    $isFirst ? $beginning : self::zeroTotals(),
+                    $isFirst ? $ending : self::zeroTotals(),
+                );
+
+                $isFirst = false;
+            }
+
+            $unbatched = $itemTransactions->filter(
+                fn (Transaction $transaction): bool => $transaction->batch_id === null,
+            );
+
+            if ($unbatched->isNotEmpty() || $isFirst) {
+                $rows[] = $this->detailedRow(
+                    $supplierItem,
+                    $unbatched,
+                    null,
+                    $isFirst ? $beginning : self::zeroTotals(),
+                    $isFirst ? $ending : self::zeroTotals(),
+                );
+            }
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Build a single batch-level report row.
+     *
+     * @param  Collection<int, Transaction>  $transactions
+     * @param  array{quantity: float, total_cost: float}  $beginning
+     * @param  array{quantity: float, total_cost: float}  $ending
+     * @return array<string, mixed>
+     */
+    protected function detailedRow(
+        SupplierItem $supplierItem,
+        Collection $transactions,
+        ?Batch $batch,
+        array $beginning,
+        array $ending,
+    ): array {
+        $movements = [];
+
+        foreach (self::MOVEMENT_TYPES as $type) {
+            $movements[$type] = $this->movementTotals($transactions, $type);
+        }
+
+        return array_merge([
+            'supplier_item_id' => $supplierItem->id,
+            'supplier_id' => $supplierItem->supplier_id,
+            'supplier_name' => $supplierItem->supplier?->name,
+            'item_code' => $supplierItem->item?->code,
+            'item_description' => $supplierItem->item?->description,
+            'unit' => $supplierItem->item?->unit,
+            'batch_number' => $batch?->batch_number,
+            'expiration_date' => $batch?->expiration_date->toDateString(),
+            'contract_price' => $supplierItem->price,
+            'beginning' => $beginning,
+        ], $movements, [
+            'ending' => $ending,
+        ]);
+    }
+
+    /**
+     * A zeroed quantity/cost pair.
+     *
+     * @return array{quantity: float, total_cost: float}
+     */
+    protected static function zeroTotals(): array
+    {
+        return ['quantity' => 0.0, 'total_cost' => 0.0];
     }
 
     /**
@@ -302,5 +493,99 @@ class ReportService
         }
 
         return $totals;
+    }
+
+    /**
+     * Derive the period's inventory remarks (FR-7.2).
+     *
+     * Remarks are sourced from the data rather than free-typed at report time:
+     * write-off transactions (expired or damaged stock pulled out) and batches
+     * whose derived status is expired, near-expiry or damaged. Each remark is a
+     * plain sentence, numbered by the caller.
+     *
+     * @return array<int, string>
+     */
+    public function remarks(Period $period): array
+    {
+        $remarks = [];
+
+        $writeOffs = Transaction::query()
+            ->with(['batch', 'supplierItem.item', 'supplierItem.supplier'])
+            ->where('period_id', $period->id)
+            ->where('type', 'write_off')
+            ->whereNull('reverses_transaction_id')
+            ->orderBy('transaction_date')
+            ->get();
+
+        foreach ($writeOffs as $transaction) {
+            $item = $transaction->supplierItem?->item;
+            $supplier = $transaction->supplierItem?->supplier;
+
+            $label = $item->description;
+            $quantity = (float) $transaction->quantity;
+            $batch = $transaction->batch?->batch_number;
+
+            $remark = sprintf(
+                'Write-off: %s of %s%s%s.',
+                $this->formatQuantity($quantity),
+                $label,
+                $supplier ? " ({$supplier->name})" : '',
+                $batch ? " from batch {$batch}" : '',
+            );
+
+            if ($transaction->remark !== null && $transaction->remark !== '') {
+                $remark .= ' Reason: '.$transaction->remark;
+            }
+
+            $remarks[] = $remark;
+        }
+
+        $batches = Batch::query()
+            ->with(['supplierItem.item', 'supplierItem.supplier'])
+            ->whereIn('supplier_item_id', $this->supplierItemIds($period))
+            ->orderBy('expiration_date')
+            ->get();
+
+        foreach ($batches as $batch) {
+            $status = $batch->expiryStatus();
+
+            if ($status === Batch::STATUS_ACTIVE) {
+                continue;
+            }
+
+            $item = $batch->supplierItem?->item;
+            $label = $item->description;
+
+            $remarks[] = match ($status) {
+                Batch::STATUS_EXPIRED => sprintf(
+                    'Expired for pull-out: %s, batch %s (expired %s).',
+                    $label,
+                    $batch->batch_number,
+                    $batch->expiration_date->toDateString(),
+                ),
+                Batch::STATUS_NEAR_EXPIRY => sprintf(
+                    'Near expiry: %s, batch %s (expires %s, %d days).',
+                    $label,
+                    $batch->batch_number,
+                    $batch->expiration_date->toDateString(),
+                    $batch->daysUntilExpiry(),
+                ),
+                default => sprintf(
+                    'Damaged for pull-out: %s, batch %s.',
+                    $label,
+                    $batch->batch_number,
+                ),
+            };
+        }
+
+        return $remarks;
+    }
+
+    /**
+     * Format a quantity for a remark, trimming trailing zeros.
+     */
+    protected function formatQuantity(float $quantity): string
+    {
+        return rtrim(rtrim(number_format($quantity, 2, '.', ''), '0'), '.');
     }
 }
