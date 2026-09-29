@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Batch;
 use App\Models\Item;
 use App\Models\Period;
 use App\Models\PeriodBalance;
@@ -183,4 +184,76 @@ test('the report groups by supplier with subtotals and a grand total', function 
             $page->where('report.grand_total.received.quantity', 14);
             $page->where('report.grand_total.received.total_cost', 1400);
         });
+});
+
+test('remarks are derived from write-off transactions', function () {
+    $supervisor = Profile::factory()->supervisor()->create();
+    $period = Period::factory()->create(['year' => 2026, 'month' => 1]);
+    $supplierItem = reportSupplierItem();
+    $batch = Batch::factory()->create([
+        'supplier_item_id' => $supplierItem->id,
+        'batch_number' => 'BATCH-9001',
+    ]);
+
+    reportMovement($period, $supplierItem, $supervisor, 'write_off', 3, 300, [
+        'batch_id' => $batch->id,
+        'remark' => 'Damaged in transit',
+    ]);
+
+    $this->withSession(['active_profile_id' => $supervisor->id])
+        ->get(route('reports.index'))
+        ->assertInertia(function ($page) {
+            $page->has('report.remarks', 1);
+            $page->where('report.remarks.0', function (string $remark): bool {
+                return str_contains($remark, 'Write-off')
+                    && str_contains($remark, 'BATCH-9001')
+                    && str_contains($remark, 'Damaged in transit');
+            });
+        });
+});
+
+test('remarks include expired and near-expiry batches', function () {
+    $supervisor = Profile::factory()->supervisor()->create();
+    $period = Period::factory()->create(['year' => 2026, 'month' => 1]);
+    $supplierItem = reportSupplierItem();
+
+    Batch::factory()->create([
+        'supplier_item_id' => $supplierItem->id,
+        'batch_number' => 'EXPIRED-1',
+        'expiration_date' => now()->subDays(5)->toDateString(),
+    ]);
+    Batch::factory()->create([
+        'supplier_item_id' => $supplierItem->id,
+        'batch_number' => 'NEAR-1',
+        'expiration_date' => now()->addDays(10)->toDateString(),
+    ]);
+
+    // Give the supplier item activity so it is included in the report.
+    reportMovement($period, $supplierItem, $supervisor, 'received', 1, 100);
+
+    $this->withSession(['active_profile_id' => $supervisor->id])
+        ->get(route('reports.index'))
+        ->assertInertia(function ($page) {
+            $page->has('report.remarks', 2);
+            $page->where('report.remarks.0', function (string $remark): bool {
+                return str_contains($remark, 'Expired for pull-out')
+                    && str_contains($remark, 'EXPIRED-1');
+            });
+            $page->where('report.remarks.1', function (string $remark): bool {
+                return str_contains($remark, 'Near expiry')
+                    && str_contains($remark, 'NEAR-1');
+            });
+        });
+});
+
+test('a period with no write-offs or flagged batches has no remarks', function () {
+    $supervisor = Profile::factory()->supervisor()->create();
+    $period = Period::factory()->create(['year' => 2026, 'month' => 1]);
+    $supplierItem = reportSupplierItem();
+
+    reportMovement($period, $supplierItem, $supervisor, 'received', 5, 500);
+
+    $this->withSession(['active_profile_id' => $supervisor->id])
+        ->get(route('reports.index'))
+        ->assertInertia(fn ($page) => $page->has('report.remarks', 0));
 });
