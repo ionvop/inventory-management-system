@@ -48,8 +48,9 @@ Route::middleware('active-profile')->group(function () {
         // period closing, since it carries the department's sign-off (FR-7.1).
         Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
 
-        // The report is exportable to Excel (FR-7.3).
+        // The report is exportable to Excel and to PDF (FR-7.3).
         Route::get('/reports/export', [ReportController::class, 'export'])->name('reports.export');
+        Route::get('/reports/export/pdf', [ReportController::class, 'exportPdf'])->name('reports.exportPdf');
     });
 
     Route::middleware('role:administrator')->group(function () {
