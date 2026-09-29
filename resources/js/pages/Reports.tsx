@@ -1,4 +1,5 @@
 import { router } from '@inertiajs/react';
+import { Download } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 
 interface ColumnTotals {
@@ -37,6 +38,7 @@ interface Report {
     period: { id: number; year: number; month: number; status: string };
     groups: ReportGroup[];
     grand_total: Record<string, ColumnTotals>;
+    remarks: string[];
 }
 
 interface PeriodOption {
@@ -135,25 +137,37 @@ export default function Reports({
                 </div>
 
                 {periods.length > 0 && (
-                    <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-                        Period
-                        <select
-                            value={selectedPeriodId ?? ''}
-                            onChange={(event) =>
-                                onSelectPeriod(Number(event.target.value))
-                            }
-                            className="rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground"
-                        >
-                            {periods.map((period) => (
-                                <option key={period.id} value={period.id}>
-                                    {periodLabel(period)}
-                                    {period.status === 'closed'
-                                        ? ' (closed)'
-                                        : ''}
-                                </option>
-                            ))}
-                        </select>
-                    </label>
+                    <div className="flex items-end gap-3">
+                        <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+                            Period
+                            <select
+                                value={selectedPeriodId ?? ''}
+                                onChange={(event) =>
+                                    onSelectPeriod(Number(event.target.value))
+                                }
+                                className="rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground"
+                            >
+                                {periods.map((period) => (
+                                    <option key={period.id} value={period.id}>
+                                        {periodLabel(period)}
+                                        {period.status === 'closed'
+                                            ? ' (closed)'
+                                            : ''}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+
+                        {selectedPeriodId !== null && (
+                            <a
+                                href={`/reports/export?period_id=${selectedPeriodId}`}
+                                className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                            >
+                                <Download className="size-4" />
+                                Export to Excel
+                            </a>
+                        )}
+                    </div>
                 )}
             </div>
 
@@ -246,6 +260,27 @@ export default function Reports({
                             </table>
                         </div>
                     )}
+
+                    <section className="mt-6 rounded-lg border border-border bg-card p-4">
+                        <h3 className="text-sm font-semibold text-foreground">
+                            Inventory remarks
+                        </h3>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                            Derived from write-off transactions and batch
+                            expiry status for this period.
+                        </p>
+                        {report.remarks.length === 0 ? (
+                            <p className="mt-3 text-sm text-muted-foreground">
+                                No remarks for this period.
+                            </p>
+                        ) : (
+                            <ol className="mt-3 list-decimal space-y-1 pl-5 text-sm text-foreground">
+                                {report.remarks.map((remark, index) => (
+                                    <li key={index}>{remark}</li>
+                                ))}
+                            </ol>
+                        )}
+                    </section>
                 </>
             )}
         </AppLayout>
