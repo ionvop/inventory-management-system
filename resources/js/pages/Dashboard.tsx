@@ -101,6 +101,17 @@ export default function Dashboard() {
                             Set contract prices linking suppliers to items.
                         </p>
                     </Link>
+                    <Link
+                        href="/audit-logs"
+                        className="rounded-lg border border-border bg-card p-4 transition-colors hover:bg-muted"
+                    >
+                        <h2 className="text-sm font-semibold text-foreground">
+                            Audit log
+                        </h2>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                            Review who changed what, and when.
+                        </p>
+                    </Link>
                 </div>
             )}
         </AppLayout>
