@@ -1,3 +1,5 @@
+import { Form } from '@inertiajs/react';
+import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 
 type BatchStatus = 'active' | 'near_expiry' | 'expired' | 'damaged';
@@ -12,6 +14,7 @@ interface BatchRow {
     item_code: string | null;
     item_description: string | null;
     unit: string | null;
+    damaged_reason: string | null;
 }
 
 interface BatchesProps {
@@ -61,6 +64,8 @@ export default function Batches({
     counts,
     nearExpiryDays,
 }: BatchesProps) {
+    const [damaging, setDamaging] = useState<BatchRow | null>(null);
+
     return (
         <AppLayout title="Batches">
             <div className="mb-6">
@@ -99,13 +104,16 @@ export default function Batches({
                             <th className="px-4 py-3 font-medium">Batch no.</th>
                             <th className="px-4 py-3 font-medium">Expires</th>
                             <th className="px-4 py-3 font-medium">Status</th>
+                            <th className="px-4 py-3 text-right font-medium">
+                                Actions
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
                         {batches.length === 0 && (
                             <tr>
                                 <td
-                                    colSpan={5}
+                                    colSpan={6}
                                     className="px-4 py-8 text-center text-sm text-muted-foreground"
                                 >
                                     No batches yet. A batch is created when
@@ -148,12 +156,93 @@ export default function Batches({
                                     >
                                         {statusLabels[batch.status]}
                                     </span>
+                                    {batch.status === 'damaged' &&
+                                        batch.damaged_reason && (
+                                            <p className="mt-1 text-xs text-muted-foreground">
+                                                {batch.damaged_reason}
+                                            </p>
+                                        )}
+                                </td>
+                                <td className="px-4 py-3">
+                                    <div className="flex justify-end">
+                                        {batch.status !== 'damaged' && (
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setDamaging(batch)
+                                                }
+                                                className="rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
+                                            >
+                                                Flag as damaged
+                                            </button>
+                                        )}
+                                    </div>
                                 </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
             </div>
+
+            {damaging && (
+                <div className="mt-4 rounded-lg border border-border bg-card p-4">
+                    <h2 className="text-sm font-semibold text-foreground">
+                        Flag batch {damaging.batch_number} as damaged
+                    </h2>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                        A damaged batch keeps that status regardless of its
+                        expiration date and is listed in the report remarks. A
+                        reason is required and will be logged.
+                    </p>
+                    <Form
+                        action={`/batches/${damaging.id}/damaged`}
+                        method="post"
+                        onSuccess={() => setDamaging(null)}
+                        className="mt-3"
+                    >
+                        {({ errors, processing }) => (
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
+                                <div className="flex-1">
+                                    <input
+                                        type="text"
+                                        name="damaged_reason"
+                                        placeholder="Reason (e.g. damaged in transit)"
+                                        className="w-full rounded-md border border-input bg-card px-3 py-2 text-sm"
+                                    />
+                                    {errors.damaged_reason && (
+                                        <p className="mt-1 text-xs text-destructive">
+                                            {errors.damaged_reason}
+                                        </p>
+                                    )}
+                                    {errors.batch && (
+                                        <p className="mt-1 text-xs text-destructive">
+                                            {errors.batch}
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="flex gap-2">
+                                    <button
+                                        type="submit"
+                                        disabled={processing}
+                                        className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                                    >
+                                        {processing
+                                            ? 'Saving...'
+                                            : 'Flag as damaged'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setDamaging(null)}
+                                        className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:bg-muted"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </Form>
+                </div>
+            )}
         </AppLayout>
     );
 }
