@@ -17,10 +17,11 @@ use Illuminate\Support\Carbon;
  * @property string $batch_number
  * @property Carbon $expiration_date
  * @property string $status
+ * @property string|null $damaged_reason
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['supplier_item_id', 'batch_number', 'expiration_date', 'status'])]
+#[Fillable(['supplier_item_id', 'batch_number', 'expiration_date', 'status', 'damaged_reason'])]
 #[Hidden([])]
 class Batch extends Model
 {
