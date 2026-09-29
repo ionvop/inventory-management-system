@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Period;
 use App\Services\ReportExcelExporter;
+use App\Services\ReportPdfExporter;
 use App\Services\ReportService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Request;
@@ -28,6 +29,7 @@ class ReportController extends Controller
     public function __construct(
         protected ReportService $reports,
         protected ReportExcelExporter $exporter,
+        protected ReportPdfExporter $pdfExporter,
     ) {}
 
     /**
@@ -69,6 +71,23 @@ class ReportController extends Controller
         abort_if($period === null, 404, 'No period to export.');
 
         return $this->exporter->download($period);
+    }
+
+    /**
+     * Export the monthly report as a PDF (FR-7.3).
+     */
+    public function exportPdf(): BinaryFileResponse
+    {
+        $periods = Period::query()
+            ->orderByDesc('year')
+            ->orderByDesc('month')
+            ->get();
+
+        $period = $this->selectedPeriod($periods);
+
+        abort_if($period === null, 404, 'No period to export.');
+
+        return $this->pdfExporter->download($period);
     }
 
     /**
