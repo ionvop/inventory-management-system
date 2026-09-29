@@ -159,13 +159,22 @@ export default function Reports({
                         </label>
 
                         {selectedPeriodId !== null && (
-                            <a
-                                href={`/reports/export?period_id=${selectedPeriodId}`}
-                                className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
-                            >
-                                <Download className="size-4" />
-                                Export to Excel
-                            </a>
+                            <>
+                                <a
+                                    href={`/reports/export?period_id=${selectedPeriodId}`}
+                                    className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                                >
+                                    <Download className="size-4" />
+                                    Export to Excel
+                                </a>
+                                <a
+                                    href={`/reports/export/pdf?period_id=${selectedPeriodId}`}
+                                    className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                                >
+                                    <Download className="size-4" />
+                                    Export to PDF
+                                </a>
+                            </>
                         )}
                     </div>
                 )}
