@@ -3,6 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Batch;
+use App\Services\AuditLogger;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\Validator;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -15,6 +20,8 @@ use Inertia\Response;
  */
 class BatchController extends Controller
 {
+    public function __construct(protected AuditLogger $audit) {}
+
     /**
      * Display batches grouped by their effective expiry status.
      */
@@ -35,6 +42,7 @@ class BatchController extends Controller
             'item_code' => $batch->supplierItem?->item?->code,
             'item_description' => $batch->supplierItem?->item?->description,
             'unit' => $batch->supplierItem?->item?->unit,
+            'damaged_reason' => $batch->damaged_reason,
         ]);
 
         return Inertia::render('Batches', [
@@ -47,5 +55,45 @@ class BatchController extends Controller
             ],
             'nearExpiryDays' => (int) config('inventory.near_expiry_days'),
         ]);
+    }
+
+    /**
+     * Flag a batch as damaged for pull-out (FR-3.2).
+     *
+     * A damaged batch keeps that status regardless of its expiration date, so
+     * it is surfaced on the dashboard and in the report remarks. The reason is
+     * required and the action is attributed to the acting profile (NFR-2.2).
+     * Any role may flag a batch, since staff perform the pull-outs (FR-3.3).
+     */
+    public function flagDamaged(int $id): RedirectResponse
+    {
+        $batch = Batch::query()->findSole($id);
+
+        if ($batch->status === Batch::STATUS_DAMAGED) {
+            return Redirect::back()->withErrors([
+                'batch' => 'This batch is already flagged as damaged.',
+            ]);
+        }
+
+        $data = Validator::validate(Request::all(), [
+            'damaged_reason' => 'required|string|max:255',
+        ]);
+
+        $before = [
+            'status' => $batch->status,
+            'damaged_reason' => $batch->damaged_reason,
+        ];
+
+        $batch->update([
+            'status' => Batch::STATUS_DAMAGED,
+            'damaged_reason' => $data['damaged_reason'],
+        ]);
+
+        $this->audit->record($batch, 'damage', $before, [
+            'status' => $batch->status,
+            'damaged_reason' => $batch->damaged_reason,
+        ]);
+
+        return Redirect::back();
     }
 }
