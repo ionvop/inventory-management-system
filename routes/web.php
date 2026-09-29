@@ -44,6 +44,9 @@ Route::middleware('active-profile')->group(function () {
         // The monthly report is a supervisor/administrator activity, matching
         // period closing, since it carries the department's sign-off (FR-7.1).
         Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+
+        // The report is exportable to Excel (FR-7.3).
+        Route::get('/reports/export', [ReportController::class, 'export'])->name('reports.export');
     });
 
     Route::middleware('role:administrator')->group(function () {
