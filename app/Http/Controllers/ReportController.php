@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Period;
+use App\Services\ReportExcelExporter;
 use App\Services\ReportService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
  * Displays the department's monthly stock report (FR-7.1).
@@ -23,7 +25,10 @@ use Inertia\Response;
  */
 class ReportController extends Controller
 {
-    public function __construct(protected ReportService $reports) {}
+    public function __construct(
+        protected ReportService $reports,
+        protected ReportExcelExporter $exporter,
+    ) {}
 
     /**
      * Display the monthly report for a selected period.
@@ -47,6 +52,23 @@ class ReportController extends Controller
             'selectedPeriodId' => $period?->id,
             'report' => $period ? $this->reports->build($period) : null,
         ]);
+    }
+
+    /**
+     * Export the monthly report as an Excel workbook (FR-7.3).
+     */
+    public function export(): BinaryFileResponse
+    {
+        $periods = Period::query()
+            ->orderByDesc('year')
+            ->orderByDesc('month')
+            ->get();
+
+        $period = $this->selectedPeriod($periods);
+
+        abort_if($period === null, 404, 'No period to export.');
+
+        return $this->exporter->download($period);
     }
 
     /**
