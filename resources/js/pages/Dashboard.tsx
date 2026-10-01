@@ -24,7 +24,8 @@ export default function Dashboard() {
                         Transactions
                     </h2>
                     <p className="mt-1 text-xs text-muted-foreground">
-                        Record stock in/out movements and view live balances.
+                        Record stock in/out movements and open a per-item stock
+                        ledger.
                     </p>
                 </Link>
                 <Link
