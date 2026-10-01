@@ -5,6 +5,7 @@ use App\Http\Controllers\BatchController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\PeriodController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\StockController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SupplierItemController;
 use App\Http\Controllers\TransactionController;
@@ -24,6 +25,11 @@ Route::middleware('active-profile')->group(function () {
     // immutable once saved, so there are no update or delete routes (FR-4.4).
     Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
     Route::post('/transactions', [TransactionController::class, 'store'])->name('transactions.store');
+
+    // The per-item stock ledger shows the running balance behind each item
+    // (FR-5.2). It is read-only and available to every role, since staff need
+    // to see the balance of the items they move.
+    Route::get('/stock/{id}', [StockController::class, 'show'])->name('stock.show');
 
     // Corrections are made by posting a reversing transaction that references
     // the original (FR-4.4). This is a high-impact action, so it is restricted
