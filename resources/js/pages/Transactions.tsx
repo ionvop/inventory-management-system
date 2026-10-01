@@ -119,7 +119,12 @@ export default function Transactions({
                                     {supplierItem.supplier_name ?? '—'}
                                 </td>
                                 <td className="px-4 py-3 text-muted-foreground">
-                                    {supplierItem.item_code ?? '—'}
+                                    <Link
+                                        href={`/stock/${supplierItem.id}`}
+                                        className="text-primary hover:underline"
+                                    >
+                                        {supplierItem.item_code ?? '—'}
+                                    </Link>
                                     {supplierItem.item_description
                                         ? ` — ${supplierItem.item_description}`
                                         : ''}
