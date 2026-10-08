@@ -30,6 +30,7 @@ interface SupplierItemFormProps {
     suppliers: SupplierOption[];
     items: ItemOption[];
     onCancel?: () => void;
+    onSuccess?: () => void;
 }
 
 export default function SupplierItemForm({
@@ -38,6 +39,7 @@ export default function SupplierItemForm({
     suppliers,
     items,
     onCancel,
+    onSuccess,
 }: SupplierItemFormProps) {
     const isEdit = mode === 'edit';
 
@@ -49,6 +51,8 @@ export default function SupplierItemForm({
                     : '/supplier-items'
             }
             method={isEdit ? 'patch' : 'post'}
+            resetOnSuccess
+            onSuccess={onSuccess}
         >
             {({ errors, processing }) => (
                 <div className="grid gap-3 sm:grid-cols-4">
