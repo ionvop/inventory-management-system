@@ -53,6 +53,7 @@ test('an administrator can create a contract price', function () {
         ]);
 
     $response->assertRedirectBack();
+    $response->assertSessionHas('success', 'Contract price created.');
     $this->assertDatabaseHas('supplier_items', [
         'supplier_id' => $supplier->id,
         'item_id' => $item->id,
@@ -147,7 +148,8 @@ test('updating a supplier item cannot change its price', function () {
             'effective_date' => '2026-01-01',
             'active' => false,
         ])
-        ->assertRedirectBack();
+        ->assertRedirectBack()
+        ->assertSessionHas('success', 'Contract price updated.');
 
     $supplierItem->refresh();
 
