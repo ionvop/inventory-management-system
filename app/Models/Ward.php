@@ -5,6 +5,7 @@ namespace App\Models;
 use Database\Factories\WardFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -44,5 +45,15 @@ class Ward extends Model
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class);
+    }
+
+    /**
+     * Limit the query to wards that are currently active.
+     *
+     * @param  Builder<Ward>  $query
+     */
+    public function scopeActive(Builder $query): void
+    {
+        $query->where('active', true);
     }
 }
