@@ -9,12 +9,14 @@ interface ProfileFormProps {
         role: ProfileRole;
     };
     onCancel?: () => void;
+    onSuccess?: () => void;
 }
 
 export default function ProfileForm({
     mode,
     profile,
     onCancel,
+    onSuccess,
 }: ProfileFormProps) {
     const isEdit = mode === 'edit';
 
@@ -22,6 +24,8 @@ export default function ProfileForm({
         <Form
             action={isEdit ? `/profiles/${profile?.id}` : '/profiles'}
             method={isEdit ? 'patch' : 'post'}
+            resetOnSuccess
+            onSuccess={onSuccess}
         >
             {({ errors, processing }) => (
                 <div className="grid gap-3 sm:grid-cols-3">
