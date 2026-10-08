@@ -12,15 +12,23 @@ interface ItemFormProps {
     mode: 'create' | 'edit';
     item?: Item;
     onCancel?: () => void;
+    onSuccess?: () => void;
 }
 
-export default function ItemForm({ mode, item, onCancel }: ItemFormProps) {
+export default function ItemForm({
+    mode,
+    item,
+    onCancel,
+    onSuccess,
+}: ItemFormProps) {
     const isEdit = mode === 'edit';
 
     return (
         <Form
             action={isEdit ? `/items/${item?.id}` : '/items'}
             method={isEdit ? 'patch' : 'post'}
+            resetOnSuccess
+            onSuccess={onSuccess}
         >
             {({ errors, processing }) => (
                 <div className="grid gap-3 sm:grid-cols-4">
