@@ -81,7 +81,7 @@ class SupplierItemController extends Controller
 
         $this->audit->record($supplierItem, 'create', null, $this->snapshot($supplierItem));
 
-        return Redirect::back();
+        return Redirect::back()->with('success', 'Contract price created.');
     }
 
     /**
@@ -112,7 +112,7 @@ class SupplierItemController extends Controller
 
         $this->audit->record($supplierItem, 'update', $before, $this->snapshot($supplierItem));
 
-        return Redirect::back();
+        return Redirect::back()->with('success', 'Contract price updated.');
     }
 
     /**
