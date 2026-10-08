@@ -211,7 +211,7 @@ class TransactionController extends Controller
             ]);
         });
 
-        return Redirect::back();
+        return Redirect::back()->with('success', 'Transaction recorded.');
     }
 
     /**
