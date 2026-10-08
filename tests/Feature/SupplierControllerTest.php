@@ -40,6 +40,7 @@ test('an administrator can create a supplier', function () {
         ]);
 
     $response->assertRedirectBack();
+    $response->assertSessionHas('success', 'Supplier created.');
     $this->assertDatabaseHas('suppliers', [
         'name' => 'Abbott Nutrition',
         'contract_status' => 'New contract',
@@ -68,6 +69,7 @@ test('an administrator can update a supplier', function () {
         ]);
 
     $response->assertRedirectBack();
+    $response->assertSessionHas('success', 'Supplier updated.');
     $this->assertDatabaseHas('suppliers', [
         'id' => $supplier->id,
         'name' => 'New Name',
