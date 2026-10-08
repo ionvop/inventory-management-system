@@ -189,6 +189,7 @@ export default function Suppliers({ suppliers }: SuppliersProps) {
                     mode={editing ? 'edit' : 'create'}
                     supplier={editing ?? undefined}
                     onCancel={() => setEditing(null)}
+                    onSuccess={() => setEditing(null)}
                 />
             </div>
 
