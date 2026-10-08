@@ -4,6 +4,7 @@ use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\BatchController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ItemController;
+use App\Http\Controllers\ManualController;
 use App\Http\Controllers\PeriodController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StockController;
@@ -24,6 +25,10 @@ Route::middleware('active-profile')->group(function () {
     // The dashboard is the landing screen (FR-1.2). It surfaces the figures
     // that need attention, scoped to the acting role, plus at-a-glance totals.
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // The user manual is a read-only guide available to every role, so staff,
+    // supervisors and administrators all read the same instructions.
+    Route::get('/manual', [ManualController::class, 'index'])->name('manual.index');
 
     // Stock movements are recorded by any role (FR-4.1). Transactions are
     // immutable once saved, so there are no update or delete routes (FR-4.4).
