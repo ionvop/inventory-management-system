@@ -51,7 +51,7 @@ class SupplierController extends Controller
 
         $this->audit->record($supplier, 'create', null, $this->snapshot($supplier));
 
-        return Redirect::back();
+        return Redirect::back()->with('success', 'Supplier created.');
     }
 
     /**
@@ -69,7 +69,7 @@ class SupplierController extends Controller
 
         $this->audit->record($supplier, 'update', $before, $this->snapshot($supplier));
 
-        return Redirect::back();
+        return Redirect::back()->with('success', 'Supplier updated.');
     }
 
     /**
