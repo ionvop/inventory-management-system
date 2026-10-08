@@ -13,3 +13,97 @@
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
 }
+
+/*
+ * Styles for the rendered user manual (resources/js/pages/Manual.tsx).
+ *
+ * The manual's Markdown is converted to HTML server-side, so these rules give
+ * the raw elements a readable, theme-aware appearance without pulling in a
+ * typography plugin.
+ */
+@layer components {
+    .manual-content {
+        @apply text-sm leading-relaxed text-foreground;
+    }
+
+    .manual-content > :first-child {
+        @apply mt-0;
+    }
+
+    .manual-content h1 {
+        @apply mt-8 mb-4 text-2xl font-bold text-foreground;
+    }
+
+    .manual-content h2 {
+        @apply mt-8 mb-3 border-b border-border pb-2 text-xl font-semibold text-foreground;
+    }
+
+    .manual-content h3 {
+        @apply mt-6 mb-2 text-base font-semibold text-foreground;
+    }
+
+    .manual-content h4 {
+        @apply mt-4 mb-2 text-sm font-semibold text-foreground;
+    }
+
+    .manual-content p {
+        @apply my-3;
+    }
+
+    .manual-content a {
+        @apply font-medium text-primary underline underline-offset-2;
+    }
+
+    .manual-content strong {
+        @apply font-semibold text-foreground;
+    }
+
+    .manual-content ul {
+        @apply my-3 list-disc space-y-1 pl-6;
+    }
+
+    .manual-content ol {
+        @apply my-3 list-decimal space-y-1 pl-6;
+    }
+
+    .manual-content li > ul,
+    .manual-content li > ol {
+        @apply my-1;
+    }
+
+    .manual-content blockquote {
+        @apply my-4 border-l-4 border-border bg-muted/40 py-2 pl-4 text-muted-foreground;
+    }
+
+    .manual-content code {
+        @apply rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground;
+    }
+
+    .manual-content pre {
+        @apply my-4 overflow-x-auto rounded-lg border border-border bg-muted p-4;
+    }
+
+    .manual-content pre code {
+        @apply bg-transparent p-0 text-xs;
+    }
+
+    .manual-content table {
+        @apply my-4 w-full border-collapse overflow-hidden text-left text-sm;
+    }
+
+    .manual-content thead {
+        @apply bg-muted/50 text-xs text-muted-foreground uppercase;
+    }
+
+    .manual-content th {
+        @apply border border-border px-3 py-2 font-medium;
+    }
+
+    .manual-content td {
+        @apply border border-border px-3 py-2 align-top;
+    }
+
+    .manual-content hr {
+        @apply my-8 border-border;
+    }
+}
