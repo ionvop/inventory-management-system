@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import AppearanceToggle from '@/components/appearance-toggle';
+import FlashToast from '@/components/flash-toast';
 import { roleLabels } from '@/lib/profile-roles';
 import { cn } from '@/lib/utils';
 
@@ -215,6 +216,7 @@ export default function AppLayout({ title, children }: AppLayoutProps) {
                     </main>
                 </div>
             </div>
+            <FlashToast />
         </>
     );
 }
