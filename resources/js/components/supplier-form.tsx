@@ -11,12 +11,14 @@ interface SupplierFormProps {
     mode: 'create' | 'edit';
     supplier?: Supplier;
     onCancel?: () => void;
+    onSuccess?: () => void;
 }
 
 export default function SupplierForm({
     mode,
     supplier,
     onCancel,
+    onSuccess,
 }: SupplierFormProps) {
     const isEdit = mode === 'edit';
 
@@ -24,6 +26,8 @@ export default function SupplierForm({
         <Form
             action={isEdit ? `/suppliers/${supplier?.id}` : '/suppliers'}
             method={isEdit ? 'patch' : 'post'}
+            resetOnSuccess
+            onSuccess={onSuccess}
         >
             {({ errors, processing }) => (
                 <div className="grid gap-3 sm:grid-cols-3">
