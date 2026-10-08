@@ -1,6 +1,7 @@
 import { Form, Head, Link } from '@inertiajs/react';
 import { useState } from 'react';
 import AppearanceToggle from '@/components/appearance-toggle';
+import FlashToast from '@/components/flash-toast';
 import ProfileForm from '@/components/profile-form';
 import { roleLabels, type ProfileRole } from '@/lib/profile-roles';
 
@@ -177,11 +178,13 @@ export default function ProfilePicker({ profiles }: ProfilePickerProps) {
                                 mode={editing ? 'edit' : 'create'}
                                 profile={editing ?? undefined}
                                 onCancel={() => setEditing(null)}
+                                onSuccess={() => setEditing(null)}
                             />
                         </div>
                     )}
                 </div>
             </div>
+            <FlashToast />
         </>
     );
 }
