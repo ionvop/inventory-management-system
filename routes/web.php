@@ -9,6 +9,7 @@ use App\Http\Controllers\StockController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SupplierItemController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\WardController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', 'App\Http\Controllers\ProfileController@index')->name('profiles.index');
@@ -83,5 +84,11 @@ Route::middleware('active-profile')->group(function () {
         Route::post('/supplier-items', [SupplierItemController::class, 'store'])->name('supplier-items.store');
         Route::patch('/supplier-items/{id}', [SupplierItemController::class, 'update'])->name('supplier-items.update');
         Route::delete('/supplier-items/{id}', [SupplierItemController::class, 'destroy'])->name('supplier-items.destroy');
+
+        // Wards attribute consumption and ward-return movements (FR-4.1).
+        Route::get('/wards', [WardController::class, 'index'])->name('wards.index');
+        Route::post('/wards', [WardController::class, 'store'])->name('wards.store');
+        Route::patch('/wards/{id}', [WardController::class, 'update'])->name('wards.update');
+        Route::delete('/wards/{id}', [WardController::class, 'destroy'])->name('wards.destroy');
     });
 });
