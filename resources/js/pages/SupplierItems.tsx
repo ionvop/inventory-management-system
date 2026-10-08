@@ -228,6 +228,7 @@ export default function SupplierItems({
                         suppliers={suppliers}
                         items={items}
                         onCancel={() => setEditing(null)}
+                        onSuccess={() => setEditing(null)}
                     />
                 ) : (
                     <p className="text-sm text-muted-foreground">
