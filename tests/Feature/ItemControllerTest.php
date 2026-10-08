@@ -46,6 +46,7 @@ test('an administrator can create an item', function () {
         ]);
 
     $response->assertRedirectBack();
+    $response->assertSessionHas('success', 'Item created.');
     $this->assertDatabaseHas('items', [
         'code' => 'ITM-0100',
         'description' => 'Nepro HP',
@@ -76,6 +77,7 @@ test('an administrator can update an item', function () {
         ]);
 
     $response->assertRedirectBack();
+    $response->assertSessionHas('success', 'Item updated.');
     $this->assertDatabaseHas('items', [
         'id' => $item->id,
         'description' => 'New',
