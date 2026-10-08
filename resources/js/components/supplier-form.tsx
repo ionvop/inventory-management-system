@@ -1,4 +1,5 @@
 import { Form } from '@inertiajs/react';
+import { contractStatusOptions } from '@/lib/contract-statuses';
 
 export interface Supplier {
     id: number;
@@ -51,13 +52,18 @@ export default function SupplierForm({
                         <label className="mb-1 block text-xs text-muted-foreground">
                             Contract status
                         </label>
-                        <input
-                            type="text"
+                        <select
                             name="contract_status"
-                            placeholder="e.g. New contract"
                             defaultValue={supplier?.contract_status ?? ''}
                             className="w-full rounded-md border border-input bg-card px-3 py-2 text-sm"
-                        />
+                        >
+                            <option value="">—</option>
+                            {contractStatusOptions.map((option) => (
+                                <option key={option} value={option}>
+                                    {option}
+                                </option>
+                            ))}
+                        </select>
                         {errors.contract_status && (
                             <p className="mt-1 text-xs text-destructive">
                                 {errors.contract_status}
