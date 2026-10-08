@@ -13,6 +13,10 @@ declare module '@inertiajs/core' {
                 name: string;
                 role: 'staff' | 'supervisor' | 'administrator';
             } | null;
+            flash: {
+                success: string | null;
+                error: string | null;
+            };
             [key: string]: unknown;
         };
     }
