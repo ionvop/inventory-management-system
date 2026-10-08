@@ -66,6 +66,7 @@ test('recording a received movement creates a batch and snapshots the price', fu
         ]);
 
     $response->assertRedirectBack();
+    $response->assertSessionHas('success', 'Transaction recorded.');
 
     $this->assertDatabaseHas('transactions', [
         'supplier_item_id' => $supplierItem->id,
@@ -202,6 +203,7 @@ test('an administrator can override a negative balance with a reason', function 
         ]);
 
     $response->assertRedirectBack();
+    $response->assertSessionHas('success', 'Transaction recorded.');
 
     $this->assertDatabaseHas('transactions', [
         'supplier_item_id' => $supplierItem->id,
