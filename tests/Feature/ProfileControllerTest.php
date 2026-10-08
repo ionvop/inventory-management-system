@@ -47,6 +47,7 @@ test('any user can create a profile', function () {
         ]);
 
     $response->assertRedirectBack();
+    $response->assertSessionHas('success', 'Profile created.');
     $this->assertDatabaseHas('profiles', ['name' => 'New Staff', 'role' => 'staff']);
 });
 
@@ -57,6 +58,7 @@ test('a profile can be created without an active profile selected', function () 
     ]);
 
     $response->assertRedirectBack();
+    $response->assertSessionHas('success', 'Profile created.');
     $this->assertDatabaseHas('profiles', ['name' => 'First Profile', 'role' => 'administrator']);
 });
 
@@ -71,6 +73,7 @@ test('any user can update a profile', function () {
         ]);
 
     $response->assertRedirectBack();
+    $response->assertSessionHas('success', 'Profile updated.');
     $this->assertDatabaseHas('profiles', ['id' => $profile->id, 'name' => 'New Name', 'role' => 'supervisor']);
 });
 
