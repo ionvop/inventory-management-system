@@ -52,7 +52,7 @@ class ItemController extends Controller
 
         $this->audit->record($item, 'create', null, $this->snapshot($item));
 
-        return Redirect::back();
+        return Redirect::back()->with('success', 'Item created.');
     }
 
     /**
@@ -70,7 +70,7 @@ class ItemController extends Controller
 
         $this->audit->record($item, 'update', $before, $this->snapshot($item));
 
-        return Redirect::back();
+        return Redirect::back()->with('success', 'Item updated.');
     }
 
     /**
