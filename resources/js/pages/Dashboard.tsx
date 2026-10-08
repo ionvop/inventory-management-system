@@ -50,49 +50,49 @@ interface AlertDefinition {
 const alertDefinitions: Record<string, AlertDefinition> = {
     expired_batches: {
         label: 'Expired batches',
-        reason: 'Expired stock must be pulled out before it can be used (FR-3.3).',
+        reason: 'Expired stock must be pulled out before it can be used.',
         href: '/batches',
         severity: 'danger',
     },
     negative_balances: {
         label: 'Negative balances',
-        reason: 'A negative balance blocks period close and signals a data error to correct (FR-6.3).',
+        reason: 'A negative balance blocks period close and signals a data error to correct.',
         href: '/transactions',
         severity: 'danger',
     },
     damaged_batches: {
         label: 'Damaged batches',
-        reason: 'Damaged stock is flagged for pull-out and appears in report remarks (FR-3.2).',
+        reason: 'Damaged stock is flagged for pull-out and appears in report remarks.',
         href: '/batches',
         severity: 'warning',
     },
     near_expiry_batches: {
         label: 'Near-expiry batches',
-        reason: 'Pull out before the expiry date to avoid waste (FR-3.3).',
+        reason: 'Pull out before the expiry date to avoid waste.',
         href: '/batches',
         severity: 'warning',
     },
     low_stock_items: {
         label: 'Low-stock items',
-        reason: 'Running low may need a new receipt to avoid stock-outs (FR-5.2).',
+        reason: 'Running low may need a new receipt to avoid stock-outs.',
         href: '/transactions',
         severity: 'warning',
     },
     open_periods_to_close: {
         label: 'Periods ready to close',
-        reason: 'A past month is still open; close it to freeze figures and carry balances forward (FR-6.2).',
+        reason: 'A past month is still open; close it to freeze figures and carry balances forward.',
         href: '/periods',
         severity: 'info',
     },
     override_transactions: {
         label: 'Overrides to review',
-        reason: 'Negative-balance overrides are high-impact and should be reviewed (FR-4.3).',
+        reason: 'Negative-balance overrides are high-impact and should be reviewed.',
         href: '/transactions',
         severity: 'info',
     },
     missing_contract_prices: {
         label: 'Missing contract prices',
-        reason: 'Items without an active contract price cannot be transacted against (FR-2.4).',
+        reason: 'Items without an active contract price cannot be transacted against.',
         href: '/supplier-items',
         severity: 'info',
     },
@@ -217,7 +217,7 @@ export default function Dashboard({
                         </p>
                         <p className="mt-2 text-xs text-muted-foreground">
                             All balances and movements are scoped to the current
-                            month (FR-6.1).
+                            month.
                         </p>
                     </div>
                     <div className="rounded-lg border border-border bg-card p-4">
@@ -231,8 +231,7 @@ export default function Dashboard({
                             })}
                         </p>
                         <p className="mt-2 text-xs text-muted-foreground">
-                            Total cost of stock on hand in the open period
-                            (FR-5.2).
+                            Total cost of stock on hand in the open period.
                         </p>
                     </div>
                     <div className="rounded-lg border border-border bg-card p-4">
@@ -243,8 +242,7 @@ export default function Dashboard({
                             {summary.active_supplier_items}
                         </p>
                         <p className="mt-2 text-xs text-muted-foreground">
-                            Number of supplier items currently transactable
-                            (FR-2.4).
+                            Number of supplier items currently transactable.
                         </p>
                     </div>
                     <div className="rounded-lg border border-border bg-card p-4">
@@ -255,7 +253,7 @@ export default function Dashboard({
                             {summary.transactions_this_period}
                         </p>
                         <p className="mt-2 text-xs text-muted-foreground">
-                            Volume of movements recorded this month (FR-4.1).
+                            Volume of movements recorded this month.
                         </p>
                     </div>
                 </div>
