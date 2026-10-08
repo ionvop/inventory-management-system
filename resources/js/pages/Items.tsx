@@ -188,6 +188,7 @@ export default function Items({ items }: ItemsProps) {
                     mode={editing ? 'edit' : 'create'}
                     item={editing ?? undefined}
                     onCancel={() => setEditing(null)}
+                    onSuccess={() => setEditing(null)}
                 />
             </div>
 
