@@ -1,6 +1,7 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import {
     ArrowLeftRight,
+    BookOpen,
     Building2,
     CalendarClock,
     FileText,
@@ -79,6 +80,7 @@ const navItems: NavItem[] = [
         icon: ScrollText,
         roles: ['administrator'],
     },
+    { label: 'User Manual', href: '/manual', icon: BookOpen },
 ];
 
 export default function AppLayout({ title, children }: AppLayoutProps) {
