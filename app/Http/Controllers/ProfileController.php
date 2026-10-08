@@ -67,7 +67,7 @@ class ProfileController extends Controller
 
         $this->audit->record($profile, 'create', null, $this->snapshot($profile));
 
-        return Redirect::back();
+        return Redirect::back()->with('success', 'Profile created.');
     }
 
     /**
@@ -90,7 +90,7 @@ class ProfileController extends Controller
 
         $this->audit->record($profile, 'update', $before, $this->snapshot($profile));
 
-        return Redirect::back();
+        return Redirect::back()->with('success', 'Profile updated.');
     }
 
     /**
