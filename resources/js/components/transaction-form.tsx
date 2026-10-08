@@ -29,6 +29,7 @@ interface TransactionFormProps {
     wards: WardOption[];
     types: TransactionTypeOption[];
     canOverride: boolean;
+    onSuccess?: () => void;
 }
 
 export default function TransactionForm({
@@ -36,6 +37,7 @@ export default function TransactionForm({
     wards,
     types,
     canOverride,
+    onSuccess,
 }: TransactionFormProps) {
     const [type, setType] = useState('received');
     const [supplierItemId, setSupplierItemId] = useState('');
@@ -49,8 +51,21 @@ export default function TransactionForm({
     const wardOptional = type === 'consumption';
     const requiresRemark = type === 'write_off';
 
+    // `resetOnSuccess` clears the native fields, but the controlled selects
+    // keep their React state, so reset them explicitly too.
+    const handleSuccess = () => {
+        setType('received');
+        setSupplierItemId('');
+        onSuccess?.();
+    };
+
     return (
-        <Form action="/transactions" method="post" resetOnSuccess>
+        <Form
+            action="/transactions"
+            method="post"
+            resetOnSuccess
+            onSuccess={handleSuccess}
+        >
             {({ errors, processing }) => (
                 <div className="grid gap-3 sm:grid-cols-3">
                     <div>
