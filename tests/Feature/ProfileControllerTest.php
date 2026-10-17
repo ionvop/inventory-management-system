@@ -88,6 +88,17 @@ test('any user can soft-delete a profile', function () {
     $this->assertSoftDeleted('profiles', ['id' => $profile->id]);
 });
 
+test('soft-deleting the active profile clears the session selection', function () {
+    $profile = Profile::factory()->create(['name' => 'To Delete']);
+
+    $response = $this->withSession(['active_profile_id' => $profile->id])
+        ->delete(route('profiles.destroy', $profile->id));
+
+    $response->assertRedirectBack();
+    $this->assertSoftDeleted('profiles', ['id' => $profile->id]);
+    $response->assertSessionMissing('active_profile_id');
+});
+
 test('soft-deleting a profile preserves its transaction history', function () {
     $profile = Profile::factory()->create(['name' => 'Has History']);
 
