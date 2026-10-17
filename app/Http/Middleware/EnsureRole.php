@@ -28,11 +28,9 @@ class EnsureRole
         $profile = $request->attributes->get(ResolveActiveProfile::ATTRIBUTE);
 
         if (! $profile instanceof Profile) {
-            $profileId = Session::get(ResolveActiveProfile::SESSION_KEY);
-
-            $profile = is_int($profileId) || is_string($profileId)
-                ? Profile::query()->findSole($profileId)
-                : null;
+            $profile = ResolveActiveProfile::resolve(
+                Session::get(ResolveActiveProfile::SESSION_KEY),
+            );
         }
 
         abort_unless(
