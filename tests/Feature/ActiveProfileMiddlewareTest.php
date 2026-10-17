@@ -15,13 +15,31 @@ test('the dashboard is reachable with an active profile', function () {
         ->assertInertia(fn ($page) => $page->component('Dashboard'));
 });
 
-test('a soft-deleted active profile is rejected', function () {
+test('a soft-deleted active profile is treated as no active profile', function () {
     $profile = Profile::factory()->create();
     $profile->delete();
 
     $this->withSession(['active_profile_id' => $profile->id])
         ->get(route('dashboard'))
-        ->assertNotFound();
+        ->assertRedirect('/');
+});
+
+test('the picker renders when the active profile was soft-deleted', function () {
+    $profile = Profile::factory()->create();
+    $profile->delete();
+
+    $this->withSession(['active_profile_id' => $profile->id])
+        ->get(route('profiles.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('ProfilePicker')
+            ->where('activeProfile', null));
+});
+
+test('a malformed active profile id is treated as no active profile', function () {
+    $this->withSession(['active_profile_id' => 'not-a-number'])
+        ->get(route('dashboard'))
+        ->assertRedirect('/');
 });
 
 test('the active profile is shared with Inertia', function () {
