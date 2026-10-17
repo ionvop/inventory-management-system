@@ -104,6 +104,10 @@ class ProfileController extends Controller
 
         $profile->delete();
 
+        if (Session::get(static::SESSION_KEY) === $profile->id) {
+            Session::forget(static::SESSION_KEY);
+        }
+
         $this->audit->record($profile, 'delete', $before, null);
 
         return Redirect::back();
