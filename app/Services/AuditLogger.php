@@ -58,10 +58,8 @@ class AuditLogger
             return $profile;
         }
 
-        $profileId = Session::get(ResolveActiveProfile::SESSION_KEY);
-
-        return is_int($profileId) || is_string($profileId)
-            ? Profile::query()->findSole($profileId)
-            : null;
+        return ResolveActiveProfile::resolve(
+            Session::get(ResolveActiveProfile::SESSION_KEY),
+        );
     }
 }
