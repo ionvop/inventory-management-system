@@ -55,13 +55,13 @@ class HandleInertiaRequests extends Middleware
      */
     protected function activeProfile(): ?array
     {
-        $profileId = Session::get(ResolveActiveProfile::SESSION_KEY);
+        $profile = ResolveActiveProfile::resolve(
+            Session::get(ResolveActiveProfile::SESSION_KEY),
+        );
 
-        if (! is_int($profileId) && ! is_string($profileId)) {
+        if (! $profile instanceof Profile) {
             return null;
         }
-
-        $profile = Profile::query()->findSole($profileId);
 
         return [
             'id' => $profile->id,
