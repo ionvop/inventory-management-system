@@ -30,17 +30,32 @@ class ResolveActiveProfile
     public const string ATTRIBUTE = 'active_profile';
 
     /**
+     * Resolve a profile id to a profile, or null when it is missing.
+     *
+     * The id comes from the session and may be stale: the profile could have
+     * been soft-deleted, hard-deleted, or the value could be malformed. Unlike
+     * findSole(), find() returns null instead of throwing, so a stale id is
+     * treated as "no active profile" rather than surfacing as a 404 or 500.
+     */
+    public static function resolve(mixed $id): ?Profile
+    {
+        if (! is_int($id) && ! is_string($id)) {
+            return null;
+        }
+
+        return Profile::query()->find($id);
+    }
+
+    /**
      * Handle an incoming request.
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $profileId = Session::get(static::SESSION_KEY);
+        $profile = static::resolve(Session::get(static::SESSION_KEY));
 
-        if (! is_int($profileId) && ! is_string($profileId)) {
+        if (! $profile instanceof Profile) {
             return Redirect::to('/');
         }
-
-        $profile = Profile::query()->findSole($profileId);
 
         $request->attributes->set(static::ATTRIBUTE, $profile);
 
