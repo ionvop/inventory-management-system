@@ -275,8 +275,8 @@ export default function Reports({
                             Inventory remarks
                         </h3>
                         <p className="mt-1 text-xs text-muted-foreground">
-                            Derived from write-off transactions and batch
-                            expiry status for this period.
+                            Derived from write-off transactions and batch expiry
+                            status for this period.
                         </p>
                         {report.remarks.length === 0 ? (
                             <p className="mt-3 text-sm text-muted-foreground">
