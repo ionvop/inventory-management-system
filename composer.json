@@ -52,6 +52,14 @@
             "npm install",
             "npm run build"
         ],
+        "deploy": [
+            "composer install --no-dev --optimize-autoloader",
+            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
+            "@php artisan key:generate",
+            "@php artisan migrate --force",
+            "npm install",
+            "npm run build"
+        ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
             "@php artisan dev"
