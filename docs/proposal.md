@@ -17,20 +17,19 @@ This document specifies the requirements for an Inventory Management System ("th
 
 The System will:
 
-*   Maintain a catalog of suppliers, items, and contract prices.
-    
-*   Track individual delivery batches, including batch number and expiration date.
-    
-*   Record every stock movement (receiving, consumption/issuance, ward returns, supplier returns, transfers to pharmacy, and write-offs for expired or damaged stock) as a discrete, timestamped transaction.
-    
-*   Automatically compute running and monthly balances from recorded transactions, removing the manual formula-copying that causes errors in the current spreadsheet.
-    
-*   Close monthly periods and carry ending balances forward as the next period's beginning balances.
-    
-*   Generate the monthly summary report in the department's existing layout, grouped by supplier, with subtotals and a remarks section.
-    
-*   Provide a passwordless, profile-based method of identifying which staff member is performing each action, for accountability and sign-off purposes.
-    
+- Maintain a catalog of suppliers, items, and contract prices.
+
+- Track individual delivery batches, including batch number and expiration date.
+
+- Record every stock movement (receiving, consumption/issuance, ward returns, supplier returns, transfers to pharmacy, and write-offs for expired or damaged stock) as a discrete, timestamped transaction.
+
+- Automatically compute running and monthly balances from recorded transactions, removing the manual formula-copying that causes errors in the current spreadsheet.
+
+- Close monthly periods and carry ending balances forward as the next period's beginning balances.
+
+- Generate the monthly summary report in the department's existing layout, grouped by supplier, with subtotals and a remarks section.
+
+- Provide a passwordless, profile-based method of identifying which staff member is performing each action, for accountability and sign-off purposes.
 
 Out of scope for version 1.0: integration with hospital pharmacy or HIS systems, barcode/RFID scanning, multi-site (multi-facility) operation, and public internet access.
 
@@ -40,23 +39,22 @@ Department administrators, IT staff responsible for deployment, and the developm
 
 ### 1.4 Definitions and Abbreviations
 
-| Term | Meaning |
-| --- | --- |
-| SRS | Software Requirements Specification |
-| Item | A distinct product/SKU (e.g., "Alitraq, 76g sachet") |
-| Supplier Item | An item as offered by a specific supplier, at a specific contract price |
-| Batch | A single delivery lot of a supplier item, identified by batch number and expiration date |
-| Ward | A hospital unit that consumes or returns stock |
-| Profile | A named staff account selected at the start of a session, used in place of a username/password login |
-| LAN | Local Area Network |
-| SPA | Single-Page Application |
+| Term          | Meaning                                                                                              |
+| ------------- | ---------------------------------------------------------------------------------------------------- |
+| SRS           | Software Requirements Specification                                                                  |
+| Item          | A distinct product/SKU (e.g., "Alitraq, 76g sachet")                                                 |
+| Supplier Item | An item as offered by a specific supplier, at a specific contract price                              |
+| Batch         | A single delivery lot of a supplier item, identified by batch number and expiration date             |
+| Ward          | A hospital unit that consumes or returns stock                                                       |
+| Profile       | A named staff account selected at the start of a session, used in place of a username/password login |
+| LAN           | Local Area Network                                                                                   |
+| SPA           | Single-Page Application                                                                              |
 
 ### 1.5 References
 
-*   Source document analyzed: MNF\_INVENTORY\_REPORT\_2026.xlsx (department's Jan–Jul 2026 monthly ledger)
-    
-*   Prior analysis: workflow and data-model review of the July 2026 report format
-    
+- Source document analyzed: MNF\_INVENTORY\_REPORT\_2026.xlsx (department's Jan–Jul 2026 monthly ledger)
+
+- Prior analysis: workflow and data-model review of the July 2026 report format
 
 2\. Overall Description
 -----------------------
@@ -68,62 +66,58 @@ The System is a new, standalone, locally hosted web application. It replaces man
 ### 2.2 Product Functions (Summary)
 
 1.  Profile-based session identification (passwordless)
-    
+
 2.  Supplier and item catalog management
-    
+
 3.  Batch registration on receipt of stock
-    
+
 4.  Transaction recording for all six movement types
-    
+
 5.  Automatic running-balance calculation
-    
+
 6.  Monthly period closing and carry-forward
-    
+
 7.  Monthly report generation and export
-    
+
 8.  Audit trail of who recorded what, and when
-    
 
 ### 2.3 User Classes and Characteristics
 
-| User class | Description | Typical tasks |
-| --- | --- | --- |
-| Staff (encoder) | Nutrition & Dietetics staff who log daily transactions | Record receiving, consumption, returns, transfers |
-| Department Head / Supervisor | Reviews and closes monthly periods, signs off reports | Approve month-end close, review discrepancies, export reports |
-| Administrator | Manages suppliers and item catalog | Maintain catalog and contract prices |
+| User class                   | Description                                            | Typical tasks                                                 |
+| ---------------------------- | ------------------------------------------------------ | ------------------------------------------------------------- |
+| Staff (encoder)              | Nutrition & Dietetics staff who log daily transactions | Record receiving, consumption, returns, transfers             |
+| Department Head / Supervisor | Reviews and closes monthly periods, signs off reports  | Approve month-end close, review discrepancies, export reports |
+| Administrator                | Manages suppliers and item catalog                     | Maintain catalog and contract prices                          |
 
 A single person may hold more than one role; role is attached to the profile, not to a separate login credential.
 
 ### 2.4 Operating Environment
 
-*   **Deployment:** Single on-premise server (or a designated workstation acting as server) connected to the department's local network. No public internet exposure is required or expected.
-    
-*   **Backend:** Laravel (PHP), running under a standard web server (Nginx or Apache with PHP-FPM), backed by a relational database (MySQL/MariaDB or PostgreSQL).
-    
-*   **Frontend:** React SPA, served by the Laravel application (via Vite build) or as static assets behind the same web server.
-    
-*   **Clients:** Desktop/laptop browsers on the local network (Chrome, Edge, or Firefox, current versions). Tablet use for data entry stations is a desirable but non-mandatory target.
-    
+- **Deployment:** Single on-premise server (or a designated workstation acting as server) connected to the department's local network. No public internet exposure is required or expected.
+
+- **Backend:** Laravel (PHP), running under a standard web server (Nginx or Apache with PHP-FPM), backed by a relational database (MySQL/MariaDB or PostgreSQL).
+
+- **Frontend:** React SPA, served by the Laravel application (via Vite build) or as static assets behind the same web server.
+
+- **Clients:** Desktop/laptop browsers on the local network (Chrome, Edge, or Firefox, current versions). Tablet use for data entry stations is a desirable but non-mandatory target.
 
 ### 2.5 Design and Implementation Constraints
 
-*   Must run entirely on the local network; no dependency on external cloud services for core functionality.
-    
-*   Must use Laravel for the backend and React for the frontend, per the stated technology decision.
-    
-*   Authentication is passwordless by design (see Section 3.1) — this is a deliberate constraint, not a gap, but it shapes the security and audit requirements in Sections 4 and 5.
-    
-*   Must preserve the existing report's visual grouping (by supplier) and column set so staff can adopt it without retraining on the report format itself.
-    
+- Must run entirely on the local network; no dependency on external cloud services for core functionality.
+
+- Must use Laravel for the backend and React for the frontend, per the stated technology decision.
+
+- Authentication is passwordless by design (see Section 3.1) — this is a deliberate constraint, not a gap, but it shapes the security and audit requirements in Sections 4 and 5.
+
+- Must preserve the existing report's visual grouping (by supplier) and column set so staff can adopt it without retraining on the report format itself.
 
 ### 2.6 Assumptions and Dependencies
 
-*   The local network is reasonably trusted (i.e., only department workstations and authorized devices can reach the server); the System is not designed to withstand hostile actors on the same network.
-    
-*   A designated device (server or NAS-class machine) is available to host the application continuously during working hours, with a backup/restore process owned by the facility's IT staff.
-    
-*   Historical data (Jan–Jul 2026) may need a one-time import from the existing spreadsheet; this is addressed as a migration task, not a recurring feature.
-    
+- The local network is reasonably trusted (i.e., only department workstations and authorized devices can reach the server); the System is not designed to withstand hostile actors on the same network.
+
+- A designated device (server or NAS-class machine) is available to host the application continuously during working hours, with a backup/restore process owned by the facility's IT staff.
+
+- Historical data (Jan–Jul 2026) may need a one-time import from the existing spreadsheet; this is addressed as a migration task, not a recurring feature.
 
 3\. Specific Requirements
 -------------------------
@@ -170,14 +164,14 @@ This replaces traditional username/password login.
 
 **FR-4.1** The System shall support recording the following transaction types against a Supplier Item (and, where relevant, a specific Batch):
 
-| Type | Effect on balance | Notes |
-| --- | --- | --- |
-| Received | + | Requires batch no. and expiration date |
-| Consumption | − | Optionally attributed to a Ward |
-| Return from Ward | + | Attributed to a Ward; does not affect supplier balance |
-| Return to Supplier | − | Reduces stock without being consumption |
-| Transfer to Pharmacy | − | Removes stock from department custody |
-| Write-off (expired/damaged) | − | Requires a reason/remark; typically tied to a specific Batch |
+| Type                        | Effect on balance | Notes                                                        |
+| --------------------------- | ----------------- | ------------------------------------------------------------ |
+| Received                    | +                 | Requires batch no. and expiration date                       |
+| Consumption                 | −                 | Optionally attributed to a Ward                              |
+| Return from Ward            | +                 | Attributed to a Ward; does not affect supplier balance       |
+| Return to Supplier          | −                 | Reduces stock without being consumption                      |
+| Transfer to Pharmacy        | −                 | Removes stock from department custody                        |
+| Write-off (expired/damaged) | −                 | Requires a reason/remark; typically tied to a specific Batch |
 
 **FR-4.2** Every transaction shall record: Supplier Item, Batch (if applicable), transaction type, quantity, unit cost (snapshotted from the Supplier Item's contract price at the time of the transaction), computed total cost, transaction date, recording profile, optional Ward, and optional free-text remark.
 
@@ -224,12 +218,11 @@ This replaces traditional username/password login.
 
 ### 4.1 User Interfaces
 
-*   Profile-picker screen (Section 3.1) as the application's entry point.
-    
-*   Main workspace: catalog management, transaction entry forms (one per transaction type, or a unified form with a type selector), a stock/balance view per item, a near-expiry dashboard, and monthly report screens.
-    
-*   The transaction entry screen shall be optimized for fast repeated entry (e.g., keep the form open after save, default the date to today, remember the last-used supplier).
-    
+- Profile-picker screen (Section 3.1) as the application's entry point.
+
+- Main workspace: catalog management, transaction entry forms (one per transaction type, or a unified form with a type selector), a stock/balance view per item, a near-expiry dashboard, and monthly report screens.
+
+- The transaction entry screen shall be optimized for fast repeated entry (e.g., keep the form open after save, default the date to today, remember the last-used supplier).
 
 ### 4.2 Hardware Interfaces
 
@@ -237,64 +230,56 @@ None required for version 1.0. Standard keyboard/mouse/touchscreen input on clie
 
 ### 4.3 Software Interfaces
 
-*   Laravel backend exposing a REST (or Inertia-based) API consumed by the React frontend.
-    
-*   Relational database (MySQL/MariaDB or PostgreSQL) for persistence.
-    
-*   PDF generation library (e.g., a Laravel-compatible PDF package) and an Excel export library for report output.
-    
+- Laravel backend exposing a REST (or Inertia-based) API consumed by the React frontend.
+
+- Relational database (MySQL/MariaDB or PostgreSQL) for persistence.
+
+- PDF generation library (e.g., a Laravel-compatible PDF package) and an Excel export library for report output.
 
 ### 4.4 Communications Interfaces
 
-*   HTTP(S) over the local network. A self-signed certificate or internal reverse proxy for HTTPS is recommended even on a LAN, to protect session cookies in transit, but is not a hard blocker for version 1.0 given the closed-network deployment.
-    
+- HTTP(S) over the local network. A self-signed certificate or internal reverse proxy for HTTPS is recommended even on a LAN, to protect session cookies in transit, but is not a hard blocker for version 1.0 given the closed-network deployment.
 
 5\. Non-Functional Requirements
 -------------------------------
 
 ### 5.1 Performance
 
-*   NFR-1.1: Transaction entry form submission shall complete in under 1 second under normal LAN conditions with up to ~20 concurrent users.
-    
-*   NFR-1.2: Monthly report generation shall complete in under 5 seconds for a period containing up to 1,000 transactions.
-    
+- NFR-1.1: Transaction entry form submission shall complete in under 1 second under normal LAN conditions with up to ~20 concurrent users.
+
+- NFR-1.2: Monthly report generation shall complete in under 5 seconds for a period containing up to 1,000 transactions.
 
 ### 5.2 Security (within a passwordless, LAN-only design)
 
-*   NFR-2.1: Because profile selection alone identifies a user, physical and network access control is the primary safeguard — the deploying facility is responsible for restricting network access to authorized department devices (e.g., via network segmentation or firewall rules), and the application shall not be exposed beyond the local network.
-    
-*   NFR-2.2: High-impact actions (catalog price changes, period re-opening, negative-balance overrides) shall always be attributed to the acting profile and logged, since these are the actions with the greatest downstream impact in a passwordless system. Profile management (add/edit/delete) is intentionally open to all users and shall likewise be attributed to the acting profile and logged.
-    
-*   NFR-2.3: The System should support an optional, configurable idle-session timeout that returns to the profile picker after a period of inactivity, to reduce the risk of one staff member's actions being misattributed after they step away.
-    
-*   NFR-2.4: The application shall validate and sanitize all input server-side regardless of client-side validation, per standard Laravel practice.
-    
+- NFR-2.1: Because profile selection alone identifies a user, physical and network access control is the primary safeguard — the deploying facility is responsible for restricting network access to authorized department devices (e.g., via network segmentation or firewall rules), and the application shall not be exposed beyond the local network.
+
+- NFR-2.2: High-impact actions (catalog price changes, period re-opening, negative-balance overrides) shall always be attributed to the acting profile and logged, since these are the actions with the greatest downstream impact in a passwordless system. Profile management (add/edit/delete) is intentionally open to all users and shall likewise be attributed to the acting profile and logged.
+
+- NFR-2.3: The System should support an optional, configurable idle-session timeout that returns to the profile picker after a period of inactivity, to reduce the risk of one staff member's actions being misattributed after they step away.
+
+- NFR-2.4: The application shall validate and sanitize all input server-side regardless of client-side validation, per standard Laravel practice.
 
 ### 5.3 Reliability and Data Integrity
 
-*   NFR-3.1: All balance figures shall be derived at read time (or via a verifiable recomputation) from the transaction log, never stored as an independently editable field, so historical figures can always be reconciled against raw transactions.
-    
-*   NFR-3.2: The database shall be backed up on a regular schedule (daily recommended) by the hosting facility's IT staff; the System should provide a manual "export full backup" action for Administrators as a convenience.
-    
+- NFR-3.1: All balance figures shall be derived at read time (or via a verifiable recomputation) from the transaction log, never stored as an independently editable field, so historical figures can always be reconciled against raw transactions.
+
+- NFR-3.2: The database shall be backed up on a regular schedule (daily recommended) by the hosting facility's IT staff; the System should provide a manual "export full backup" action for Administrators as a convenience.
 
 ### 5.4 Usability
 
-*   NFR-4.1: Staff already familiar with the spreadsheet's column layout shall be able to locate equivalent fields in the new transaction forms and report without additional documentation, per the layout continuity required in FR-7.1.
-    
-*   NFR-4.2: The profile picker and its management controls shall require no more than two clicks to add a new profile.
-    
+- NFR-4.1: Staff already familiar with the spreadsheet's column layout shall be able to locate equivalent fields in the new transaction forms and report without additional documentation, per the layout continuity required in FR-7.1.
+
+- NFR-4.2: The profile picker and its management controls shall require no more than two clicks to add a new profile.
 
 ### 5.5 Maintainability
 
-*   NFR-5.1: The System shall follow Laravel's standard MVC/service-layer conventions and React's component conventions, to keep the codebase approachable for future maintainers.
-    
-*   NFR-5.2: Business rules that are currently spreadsheet formulas (e.g., balance calculation in Section 3.5) shall live in a single, tested backend service/class, not duplicated across the frontend and backend.
-    
+- NFR-5.1: The System shall follow Laravel's standard MVC/service-layer conventions and React's component conventions, to keep the codebase approachable for future maintainers.
+
+- NFR-5.2: Business rules that are currently spreadsheet formulas (e.g., balance calculation in Section 3.5) shall live in a single, tested backend service/class, not duplicated across the frontend and backend.
 
 ### 5.6 Availability
 
-*   NFR-6.1: The System should be available during the department's operating hours; scheduled maintenance windows outside those hours are acceptable and do not require redundancy/failover infrastructure for version 1.0.
-    
+- NFR-6.1: The System should be available during the department's operating hours; scheduled maintenance windows outside those hours are acceptable and do not require redundancy/failover infrastructure for version 1.0.
 
 6\. Data Migration
 ------------------
@@ -306,24 +291,23 @@ None required for version 1.0. Standard keyboard/mouse/touchscreen input on clie
 7\. Future Considerations (Out of Scope for v1.0)
 -------------------------------------------------
 
-*   Barcode/QR scanning at receiving and issuance
-    
-*   Integration with hospital pharmacy or HIS systems
-    
-*   Multi-facility/multi-department support
-    
-*   Optional step-up authentication (e.g., PIN) for high-impact actions, if the passwordless model is later found insufficient
-    
-*   Automated low-stock and near-expiry email/SMS alerts
-    
+- Barcode/QR scanning at receiving and issuance
+
+- Integration with hospital pharmacy or HIS systems
+
+- Multi-facility/multi-department support
+
+- Optional step-up authentication (e.g., PIN) for high-impact actions, if the passwordless model is later found insufficient
+
+- Automated low-stock and near-expiry email/SMS alerts
 
 8\. Appendix A — Requirements Traceability to Source Report
 -----------------------------------------------------------
 
-| Report element (July format) | Corresponding requirement |
-| --- | --- |
-| Item code, description, unit, batch no., expiration date, contract price | FR-2.1–2.4, FR-3.1 |
-| Beginning / Received / Return from Wards / Return to Supplier / Transfer to Pharmacy / Consumption / Ending columns | FR-4.1, FR-5.1 |
-| Per-supplier grouping and subtotal, grand subtotal | FR-7.1 |
-| Inventory Remarks (pull-outs, pending replacements) | FR-3.2, FR-3.3, FR-7.2 |
-| Prepared by / Received by | FR-1.6, FR-7.3 |
+| Report element (July format)                                                                                        | Corresponding requirement |
+| ------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| Item code, description, unit, batch no., expiration date, contract price                                            | FR-2.1–2.4, FR-3.1        |
+| Beginning / Received / Return from Wards / Return to Supplier / Transfer to Pharmacy / Consumption / Ending columns | FR-4.1, FR-5.1            |
+| Per-supplier grouping and subtotal, grand subtotal                                                                  | FR-7.1                    |
+| Inventory Remarks (pull-outs, pending replacements)                                                                 | FR-3.2, FR-3.3, FR-7.2    |
+| Prepared by / Received by                                                                                           | FR-1.6, FR-7.3            |
