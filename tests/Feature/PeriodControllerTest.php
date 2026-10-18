@@ -138,6 +138,58 @@ test('closing a period writes an audit log', function () {
     expect($log->after['status'])->toBe('closed');
 });
 
+test('closing a period opens the next period', function () {
+    $supervisor = Profile::factory()->supervisor()->create();
+    $period = Period::factory()->create(['year' => 2026, 'month' => 1]);
+
+    $this->withSession(['active_profile_id' => $supervisor->id])
+        ->post(route('periods.close', $period->id));
+
+    $next = Period::query()->where('year', 2026)->where('month', 2)->sole();
+    expect($next->status)->toBe('open');
+});
+
+test('closing a December period opens January of the following year', function () {
+    $supervisor = Profile::factory()->supervisor()->create();
+    $period = Period::factory()->create(['year' => 2026, 'month' => 12]);
+
+    $this->withSession(['active_profile_id' => $supervisor->id])
+        ->post(route('periods.close', $period->id));
+
+    $next = Period::query()->where('year', 2027)->where('month', 1)->sole();
+    expect($next->status)->toBe('open');
+});
+
+test('closing a period does not reset an existing next period', function () {
+    $supervisor = Profile::factory()->supervisor()->create();
+    $period = Period::factory()->create(['year' => 2026, 'month' => 1]);
+    $next = Period::factory()->create(['year' => 2026, 'month' => 2]);
+    $nextSupplierItem = periodSupplierItem();
+    recordMovement($next, $nextSupplierItem, $supervisor, 'received', 4, 400);
+
+    $this->withSession(['active_profile_id' => $supervisor->id])
+        ->post(route('periods.close', $period->id));
+
+    $next->refresh();
+    expect($next->status)->toBe('open');
+    expect($next->transactions()->count())->toBe(1);
+    expect(Period::query()->where('year', 2026)->where('month', 2)->count())->toBe(1);
+});
+
+test('a failed close does not open the next period', function () {
+    $supervisor = Profile::factory()->supervisor()->create();
+    $period = Period::factory()->create(['year' => 2026, 'month' => 1]);
+    $supplierItem = periodSupplierItem();
+
+    recordMovement($period, $supplierItem, $supervisor, 'consumption', 5, 500);
+
+    $this->withSession(['active_profile_id' => $supervisor->id])
+        ->post(route('periods.close', $period->id))
+        ->assertSessionHasErrors('period');
+
+    expect(Period::query()->where('year', 2026)->where('month', 2)->doesntExist())->toBeTrue();
+});
+
 test('an administrator can reopen a closed period with a reason', function () {
     $admin = Profile::factory()->administrator()->create();
     $period = Period::factory()->create([
