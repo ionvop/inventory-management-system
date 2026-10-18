@@ -95,12 +95,18 @@ class PeriodController extends Controller
                 'reopened_reason' => null,
             ]);
 
+            // Open the next period so carried-forward beginning balances
+            // display immediately, before any transaction is recorded
+            // (FR-6.2c). firstOrCreate keeps this idempotent.
+            $next = $period->next();
+
             $this->audit->record($period, 'close', null, [
                 'year' => $period->year,
                 'month' => $period->month,
                 'status' => $period->status,
                 'closed_at' => $period->closed_at?->toDateTimeString(),
                 'closed_by' => $period->closed_by,
+                'next_period_id' => $next->id,
             ]);
         });
 
