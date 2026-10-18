@@ -83,12 +83,32 @@ class Period extends Model
     }
 
     /**
+     * The period immediately following this one, creating it when absent.
+     *
+     * The mirror of {@see previous()}: the smallest (year, month) strictly
+     * after this one. Closing a period opens the next one automatically so
+     * carried-forward balances display immediately (FR-6.2c), and
+     * firstOrCreate keeps this idempotent when the next period already
+     * exists.
+     */
+    public function next(): self
+    {
+        [$year, $month] = $this->month === 12
+            ? [$this->year + 1, 1]
+            : [$this->year, $this->month + 1];
+
+        return static::query()->firstOrCreate(
+            ['year' => $year, 'month' => $month],
+            ['status' => 'open'],
+        );
+    }
+
+    /**
      * Resolve the period a given date falls into, creating it when absent.
      *
-     * Transactions are organised into monthly periods (FR-6.1). Until period
-     * management is built, the period for a transaction is derived from its
-     * date, so recording a transaction in a new month opens that month's
-     * period automatically.
+     * Transactions are organised into monthly periods (FR-6.1). The period
+     * for a transaction is derived from its date, so recording a transaction
+     * in a month whose period does not exist yet opens it automatically.
      */
     public static function forDate(Carbon $date): self
     {
