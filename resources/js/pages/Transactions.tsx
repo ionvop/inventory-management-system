@@ -251,7 +251,9 @@ export default function Transactions({
                                                 <button
                                                     type="button"
                                                     onClick={() =>
-                                                        setReversing(transaction)
+                                                        setReversing(
+                                                            transaction,
+                                                        )
                                                     }
                                                     className="text-xs font-medium text-destructive hover:underline"
                                                 >
