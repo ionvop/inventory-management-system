@@ -141,9 +141,7 @@ export default function Stock({
                             <th className="px-4 py-3 font-medium">Date</th>
                             <th className="px-4 py-3 font-medium">Type</th>
                             <th className="px-4 py-3 font-medium">Qty</th>
-                            <th className="px-4 py-3 font-medium">
-                                Unit cost
-                            </th>
+                            <th className="px-4 py-3 font-medium">Unit cost</th>
                             <th className="px-4 py-3 font-medium">
                                 Total cost
                             </th>
