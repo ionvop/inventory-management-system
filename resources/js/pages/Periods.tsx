@@ -60,9 +60,7 @@ export default function Periods({ periods, canReopen }: PeriodsProps) {
                             <th className="px-4 py-3 font-medium">
                                 Negative items
                             </th>
-                            <th className="px-4 py-3 font-medium">
-                                Closed by
-                            </th>
+                            <th className="px-4 py-3 font-medium">Closed by</th>
                             <th className="px-4 py-3 text-right font-medium">
                                 Actions
                             </th>
