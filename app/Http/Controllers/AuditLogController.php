@@ -7,6 +7,7 @@ use App\Models\Batch;
 use App\Models\Item;
 use App\Models\Period;
 use App\Models\Profile;
+use App\Models\Setting;
 use App\Models\Supplier;
 use App\Models\SupplierItem;
 use App\Models\Transaction;
@@ -49,6 +50,7 @@ class AuditLogController extends Controller
         'Batch' => Batch::class,
         'Transaction' => Transaction::class,
         'Period' => Period::class,
+        'Setting' => Setting::class,
     ];
 
     /**
@@ -64,6 +66,7 @@ class AuditLogController extends Controller
         'Batch' => 'Batch',
         'Transaction' => 'Transaction',
         'Period' => 'Period',
+        'Setting' => 'Setting',
     ];
 
     /**
