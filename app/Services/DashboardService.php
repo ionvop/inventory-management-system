@@ -39,7 +39,10 @@ class DashboardService
      */
     protected const int RECENT_LIMIT = 10;
 
-    public function __construct(protected BalanceService $balances) {}
+    public function __construct(
+        protected BalanceService $balances,
+        protected BidService $bids,
+    ) {}
 
     /**
      * Build the dashboard payload for the acting role.
@@ -89,6 +92,7 @@ class DashboardService
 
         if (in_array($role, ['supervisor', 'administrator'], true)) {
             $alerts['open_periods_to_close'] = $this->openPeriodsToClose();
+            $alerts['bids_to_reorder'] = $this->bids->reorderCount();
         }
 
         if ($role === 'administrator') {
