@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\BatchController;
+use App\Http\Controllers\BidController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\ManualController;
@@ -58,6 +59,13 @@ Route::middleware('active-profile')->group(function () {
     Route::middleware('role:supervisor,administrator')->group(function () {
         Route::get('/periods', [PeriodController::class, 'index'])->name('periods.index');
         Route::post('/periods/{id}/close', [PeriodController::class, 'close'])->name('periods.close');
+
+        // Bid quantities track how much of a supplier commitment is still
+        // outstanding. Setting a bid is a supervisor/administrator activity,
+        // matching period closing and reporting. Bids are for internal
+        // tracking only and never appear in the exported reports.
+        Route::get('/bids', [BidController::class, 'index'])->name('bids.index');
+        Route::post('/bids', [BidController::class, 'store'])->name('bids.store');
 
         // The monthly report is a supervisor/administrator activity, matching
         // period closing, since it carries the department's sign-off (FR-7.1).
