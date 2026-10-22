@@ -165,7 +165,7 @@ test('the audit log lists the available filter options', function () {
         ->get(route('audit-logs.index'));
 
     $response->assertInertia(function ($page) {
-        $page->has('filterOptions.recordTypes', 7);
+        $page->has('filterOptions.recordTypes', 8);
         $page->has('filterOptions.actions', 2);
     });
 });
