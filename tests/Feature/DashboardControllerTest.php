@@ -82,17 +82,19 @@ test('a staff profile sees only operational alerts', function () {
             ->has('alerts.negative_balances')
             ->has('alerts.low_stock_items')
             ->missing('alerts.open_periods_to_close')
+            ->missing('alerts.bids_to_reorder')
             ->missing('alerts.override_transactions')
             ->missing('alerts.missing_contract_prices'));
 });
 
-test('a supervisor additionally sees the period-close alert', function () {
+test('a supervisor additionally sees the period-close and bid alerts', function () {
     $supervisor = Profile::factory()->supervisor()->create();
 
     $this->withSession(['active_profile_id' => $supervisor->id])
         ->get(route('dashboard'))
         ->assertInertia(fn ($page) => $page
             ->has('alerts.open_periods_to_close')
+            ->has('alerts.bids_to_reorder')
             ->missing('alerts.override_transactions')
             ->missing('alerts.missing_contract_prices'));
 });
@@ -109,6 +111,7 @@ test('an administrator sees every alert', function () {
             ->has('alerts.negative_balances')
             ->has('alerts.low_stock_items')
             ->has('alerts.open_periods_to_close')
+            ->has('alerts.bids_to_reorder')
             ->has('alerts.override_transactions')
             ->has('alerts.missing_contract_prices'));
 });
