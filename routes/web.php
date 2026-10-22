@@ -8,6 +8,7 @@ use App\Http\Controllers\ItemController;
 use App\Http\Controllers\ManualController;
 use App\Http\Controllers\PeriodController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\SettingController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SupplierItemController;
@@ -81,6 +82,14 @@ Route::middleware('active-profile')->group(function () {
 
         // The audit trail is reviewable by administrators only (FR-8.2).
         Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
+
+        // The tunable inventory thresholds (near-expiry window, low-stock and
+        // bid reorder thresholds) can be overridden at runtime. Changing a
+        // threshold affects what the whole department sees, so it is an
+        // administrator action and is recorded on the audit trail (NFR-2.2).
+        Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
+        Route::post('/settings', [SettingController::class, 'store'])->name('settings.store');
+        Route::post('/settings/reset', [SettingController::class, 'reset'])->name('settings.reset');
     });
 
     // Catalog management is restricted to administrators (FR-2.1, FR-2.2).
