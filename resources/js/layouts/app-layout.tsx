@@ -11,6 +11,7 @@ import {
     PackageSearch,
     ScrollText,
     Tags,
+    Target,
     Truck,
     X,
     type LucideIcon,
@@ -42,6 +43,12 @@ const navItems: NavItem[] = [
         label: 'Periods',
         href: '/periods',
         icon: CalendarClock,
+        roles: ['supervisor', 'administrator'],
+    },
+    {
+        label: 'Bids',
+        href: '/bids',
+        icon: Target,
         roles: ['supervisor', 'administrator'],
     },
     {
