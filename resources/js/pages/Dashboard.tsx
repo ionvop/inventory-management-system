@@ -84,6 +84,12 @@ const alertDefinitions: Record<string, AlertDefinition> = {
         href: '/periods',
         severity: 'info',
     },
+    bids_to_reorder: {
+        label: 'Bids to reorder',
+        reason: 'The remaining bid quantity has dropped to the reorder threshold; it is time to place a new bid.',
+        href: '/bids',
+        severity: 'warning',
+    },
     override_transactions: {
         label: 'Overrides to review',
         reason: 'Negative-balance overrides are high-impact and should be reviewed.',
