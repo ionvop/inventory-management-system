@@ -12,8 +12,8 @@ use App\Models\Ward;
 use App\Services\AuditLogger;
 use App\Services\BalanceService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Request;
@@ -45,6 +45,11 @@ class TransactionController extends Controller
         'transfer_to_pharmacy' => 'Transfer to Pharmacy',
         'write_off' => 'Write-off (expired/damaged)',
     ];
+
+    /**
+     * The number of transactions shown per page of the history list.
+     */
+    protected const int PER_PAGE = 20;
 
     public function __construct(
         protected AuditLogger $audit,
@@ -90,7 +95,7 @@ class TransactionController extends Controller
             'period' => $period
                 ? ['year' => $period->year, 'month' => $period->month]
                 : null,
-            'recentTransactions' => $this->recentTransactions(),
+            'transactions' => $this->transactions(),
             'canOverride' => $this->actingProfile()?->role === 'administrator',
             'canReverse' => $this->actingProfile()?->role === 'administrator',
         ]);
@@ -366,9 +371,13 @@ class TransactionController extends Controller
     }
 
     /**
-     * The most recently recorded transactions, for the activity list.
+     * The paginated transaction history, newest first.
      *
-     * @return Collection<int, array{
+     * The list is paginated rather than capped so that older movements stay
+     * reachable — an administrator can page back to any transaction and
+     * reverse it (FR-4.4).
+     *
+     * @return LengthAwarePaginator<int, array{
      *     id: int,
      *     type: string,
      *     type_label: string,
@@ -383,14 +392,14 @@ class TransactionController extends Controller
      *     is_reversed: bool,
      * }>
      */
-    protected function recentTransactions()
+    protected function transactions(): LengthAwarePaginator
     {
         return Transaction::query()
             ->with(['supplierItem.supplier', 'supplierItem.item', 'profile', 'ward', 'reversedBy'])
             ->orderByDesc('id')
-            ->limit(20)
-            ->get()
-            ->map(fn (Transaction $transaction) => [
+            ->paginate(static::PER_PAGE)
+            ->withQueryString()
+            ->through(fn (Transaction $transaction): array => [
                 'id' => $transaction->id,
                 'type' => $transaction->type,
                 'type_label' => $this->typeLabel($transaction->type),
