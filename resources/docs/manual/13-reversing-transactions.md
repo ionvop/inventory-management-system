@@ -37,7 +37,9 @@ Use a reversal when a transaction was recorded incorrectly, for example:
 ## How to reverse a transaction
 
 1. Open **Transactions**.
-2. Find the transaction in the recent-activity list.
+2. Find the transaction in the **Transaction history** list below the form. The
+   list shows 20 entries per page, newest first — use the page links under the
+   table to reach older transactions.
 3. Click **Reverse** on its row.
 4. Enter a **remark** explaining the correction, e.g.
    `Recorded against the wrong item.`
