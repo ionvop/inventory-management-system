@@ -132,6 +132,16 @@ current balance for the open period. Click an **item code** to open that item's
 
 ---
 
+## Transaction history
+
+Under the balance table, the **Transaction history** lists every recorded
+movement, newest first, 20 per page. Use the page links below the table to reach
+older entries — the full history is always available, not just the latest
+entries. Administrators can reverse any transaction from this list (see
+_Reversing Transactions_).
+
+---
+
 ## Rules the system enforces
 
 - **No active contract price** — a transaction cannot be recorded against a
