@@ -1,5 +1,6 @@
 import { Link, useForm } from '@inertiajs/react';
 import { useState } from 'react';
+import Pagination, { type Paginated } from '@/components/pagination';
 import TransactionForm, {
     type SupplierItemOption,
     type TransactionTypeOption,
@@ -27,7 +28,7 @@ interface TransactionsProps {
     wards: WardOption[];
     types: TransactionTypeOption[];
     period: { year: number; month: number } | null;
-    recentTransactions: RecentTransaction[];
+    transactions: Paginated<RecentTransaction>;
     canOverride: boolean;
     canReverse: boolean;
 }
@@ -52,7 +53,7 @@ export default function Transactions({
     wards,
     types,
     period,
-    recentTransactions,
+    transactions,
     canOverride,
     canReverse,
 }: TransactionsProps) {
@@ -174,7 +175,7 @@ export default function Transactions({
 
             <div className="mt-8">
                 <h2 className="mb-3 text-sm font-semibold text-foreground">
-                    Recent transactions
+                    Transaction history
                 </h2>
                 <div className="overflow-hidden rounded-lg border border-border bg-card">
                     <table className="w-full text-left text-sm">
@@ -199,7 +200,7 @@ export default function Transactions({
                             </tr>
                         </thead>
                         <tbody>
-                            {recentTransactions.length === 0 && (
+                            {transactions.data.length === 0 && (
                                 <tr>
                                     <td
                                         colSpan={canReverse ? 8 : 7}
@@ -209,7 +210,7 @@ export default function Transactions({
                                     </td>
                                 </tr>
                             )}
-                            {recentTransactions.map((transaction) => (
+                            {transactions.data.map((transaction) => (
                                 <tr
                                     key={transaction.id}
                                     className="border-b border-border last:border-0"
@@ -267,6 +268,7 @@ export default function Transactions({
                         </tbody>
                     </table>
                 </div>
+                <Pagination paginator={transactions} preserveScroll />
             </div>
 
             {reversing && (
