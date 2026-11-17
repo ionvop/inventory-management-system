@@ -362,3 +362,67 @@ test('transactions cannot be edited or deleted', function () {
 test('the transaction screen requires an active profile', function () {
     $this->get(route('transactions.index'))->assertRedirect('/');
 });
+
+test('the transaction history is paginated newest first', function () {
+    $staff = Profile::factory()->create();
+    $supplierItem = activeSupplierItem();
+
+    $transactions = Transaction::factory()
+        ->count(25)
+        ->create(['supplier_item_id' => $supplierItem->id]);
+
+    $this->withSession(['active_profile_id' => $staff->id])
+        ->get(route('transactions.index'))
+        ->assertInertia(function ($page) use ($transactions) {
+            $page->component('Transactions');
+            $page->where('transactions.total', 25);
+            $page->where('transactions.per_page', 20);
+            $page->where('transactions.current_page', 1);
+            $page->where('transactions.last_page', 2);
+            $page->has('transactions.data', 20);
+            // Newest first: the last-created row leads the list.
+            $page->where('transactions.data.0.id', $transactions->last()->id);
+        });
+
+    $this->withSession(['active_profile_id' => $staff->id])
+        ->get(route('transactions.index', ['page' => 2]))
+        ->assertInertia(function ($page) use ($transactions) {
+            $page->where('transactions.current_page', 2);
+            $page->has('transactions.data', 5);
+            // The oldest row is reachable on the final page.
+            $page->where('transactions.data.4.id', $transactions->first()->id);
+        });
+});
+
+test('an older transaction on a later page can still be reversed', function () {
+    $admin = Profile::factory()->administrator()->create();
+    $supplierItem = activeSupplierItem();
+
+    $transactions = Transaction::factory()
+        ->count(25)
+        ->create([
+            'supplier_item_id' => $supplierItem->id,
+            'type' => 'received',
+            'quantity' => 10,
+            'unit_cost' => 100,
+            'total_cost' => 1000,
+            'transaction_date' => now()->toDateString(),
+        ]);
+
+    $oldest = $transactions->first();
+
+    // The oldest row sits on page 2, beyond the old 20-row cap.
+    $this->withSession(['active_profile_id' => $admin->id])
+        ->get(route('transactions.index', ['page' => 2]))
+        ->assertInertia(fn ($page) => $page
+            ->where('transactions.data.4.id', $oldest->id));
+
+    $this->withSession(['active_profile_id' => $admin->id])
+        ->post(route('transactions.reverse', $oldest->id), [
+            'remark' => 'Recorded against the wrong item.',
+        ])
+        ->assertRedirectBack();
+
+    expect(Transaction::query()->where('reverses_transaction_id', $oldest->id)->exists())
+        ->toBeTrue();
+});
