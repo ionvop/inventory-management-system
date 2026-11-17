@@ -195,7 +195,7 @@ test('the transaction screen flags reversals and reversed rows', function () {
         ->assertInertia(function ($page) use ($original) {
             $page->component('Transactions');
             $page->where('canReverse', true);
-            $page->where('recentTransactions.0.reverses_transaction_id', $original->id);
-            $page->where('recentTransactions.1.is_reversed', true);
+            $page->where('transactions.data.0.reverses_transaction_id', $original->id);
+            $page->where('transactions.data.1.is_reversed', true);
         });
 });
