@@ -1,5 +1,6 @@
 import { router } from '@inertiajs/react';
 import { useState } from 'react';
+import Pagination, { type Paginated } from '@/components/pagination';
 import AppLayout from '@/layouts/app-layout';
 
 interface AuditChange {
@@ -19,23 +20,6 @@ interface AuditRow {
     auditable_id: number;
     label: string | null;
     changes: AuditChange[];
-}
-
-interface PaginationLink {
-    url: string | null;
-    label: string;
-    active: boolean;
-}
-
-interface Paginated<T> {
-    data: T[];
-    current_page: number;
-    last_page: number;
-    per_page: number;
-    total: number;
-    from: number | null;
-    to: number | null;
-    links: PaginationLink[];
 }
 
 interface FilterOption {
@@ -350,46 +334,7 @@ export default function AuditLogs({
                 </table>
             </div>
 
-            {logs.last_page > 1 && (
-                <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                    <p className="text-xs text-muted-foreground">
-                        Showing {logs.from ?? 0}–{logs.to ?? 0} of {logs.total}
-                    </p>
-                    <div className="flex flex-wrap gap-1">
-                        {logs.links.map((link, index) =>
-                            link.url ? (
-                                <button
-                                    key={index}
-                                    type="button"
-                                    onClick={() =>
-                                        router.get(
-                                            link.url as string,
-                                            {},
-                                            { preserveState: true },
-                                        )
-                                    }
-                                    className={
-                                        link.active
-                                            ? 'rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground'
-                                            : 'rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted'
-                                    }
-                                    dangerouslySetInnerHTML={{
-                                        __html: link.label,
-                                    }}
-                                />
-                            ) : (
-                                <span
-                                    key={index}
-                                    className="rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground opacity-50"
-                                    dangerouslySetInnerHTML={{
-                                        __html: link.label,
-                                    }}
-                                />
-                            ),
-                        )}
-                    </div>
-                </div>
-            )}
+            <Pagination paginator={logs} />
         </AppLayout>
     );
 }
