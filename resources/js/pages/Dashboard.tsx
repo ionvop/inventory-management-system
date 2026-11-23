@@ -25,10 +25,28 @@ interface DashboardSummary {
     low_stock_threshold: number;
 }
 
+interface SupplierItemConsumption {
+    supplier_item_id: number;
+    supplier_name: string | null;
+    item_code: string | null;
+    item_description: string | null;
+    unit: string | null;
+    quantity: number;
+    total_cost: number;
+    transaction_count: number;
+}
+
+interface ConsumptionLast30Days {
+    window_days: number;
+    since: string;
+    rows: SupplierItemConsumption[];
+}
+
 interface DashboardProps {
     alerts: Record<string, number>;
     summary: DashboardSummary;
     recentTransactions: RecentTransaction[];
+    consumptionLast30Days: ConsumptionLast30Days;
 }
 
 type AlertSeverity = 'danger' | 'warning' | 'info';
@@ -135,6 +153,7 @@ export default function Dashboard({
     alerts,
     summary,
     recentTransactions,
+    consumptionLast30Days,
 }: DashboardProps) {
     const { activeProfile } = usePage().props;
 
@@ -343,6 +362,92 @@ export default function Dashboard({
                                     </td>
                                     <td className="px-4 py-3 text-muted-foreground">
                                         {transaction.profile_name ?? '—'}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section className="mt-8">
+                <div className="mb-3 flex items-center justify-between">
+                    <h2 className="text-sm font-semibold text-foreground">
+                        Supplier item consumption (last 30 days)
+                    </h2>
+                    <span className="text-xs text-muted-foreground">
+                        Since {consumptionLast30Days.since}
+                    </span>
+                </div>
+                <div className="overflow-hidden rounded-lg border border-border bg-card">
+                    <table className="w-full text-left text-sm">
+                        <thead className="border-b border-border bg-muted/50 text-xs text-muted-foreground uppercase">
+                            <tr>
+                                <th className="px-4 py-3 font-medium">
+                                    Supplier item
+                                </th>
+                                <th className="px-4 py-3 font-medium">Unit</th>
+                                <th className="px-4 py-3 text-right font-medium">
+                                    Consumed qty
+                                </th>
+                                <th className="px-4 py-3 text-right font-medium">
+                                    Consumed cost
+                                </th>
+                                <th className="px-4 py-3 text-right font-medium">
+                                    Movements
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {consumptionLast30Days.rows.length === 0 && (
+                                <tr>
+                                    <td
+                                        colSpan={5}
+                                        className="px-4 py-8 text-center text-sm text-muted-foreground"
+                                    >
+                                        No active supplier items.
+                                    </td>
+                                </tr>
+                            )}
+                            {consumptionLast30Days.rows.map((row) => (
+                                <tr
+                                    key={row.supplier_item_id}
+                                    className="border-b border-border last:border-0"
+                                >
+                                    <td className="px-4 py-3 text-foreground">
+                                        <span className="font-medium">
+                                            {row.supplier_name ?? '—'} —{' '}
+                                            {row.item_code ?? '—'}
+                                        </span>
+                                        {row.item_description && (
+                                            <span className="block text-xs text-muted-foreground">
+                                                {row.item_description}
+                                            </span>
+                                        )}
+                                    </td>
+                                    <td className="px-4 py-3 text-muted-foreground">
+                                        {row.unit ?? '—'}
+                                    </td>
+                                    <td className="px-4 py-3 text-right text-foreground">
+                                        {row.quantity.toLocaleString(
+                                            undefined,
+                                            {
+                                                minimumFractionDigits: 2,
+                                                maximumFractionDigits: 2,
+                                            },
+                                        )}
+                                    </td>
+                                    <td className="px-4 py-3 text-right text-foreground">
+                                        {row.total_cost.toLocaleString(
+                                            undefined,
+                                            {
+                                                minimumFractionDigits: 2,
+                                                maximumFractionDigits: 2,
+                                            },
+                                        )}
+                                    </td>
+                                    <td className="px-4 py-3 text-right text-muted-foreground">
+                                        {row.transaction_count}
                                     </td>
                                 </tr>
                             ))}
