@@ -287,92 +287,6 @@ export default function Dashboard({
             <section className="mt-8">
                 <div className="mb-3 flex items-center justify-between">
                     <h2 className="text-sm font-semibold text-foreground">
-                        Recent activity
-                    </h2>
-                    <Link
-                        href="/transactions"
-                        className="text-xs text-primary hover:underline"
-                    >
-                        View all transactions
-                    </Link>
-                </div>
-                <div className="overflow-hidden rounded-lg border border-border bg-card">
-                    <table className="w-full text-left text-sm">
-                        <thead className="border-b border-border bg-muted/50 text-xs text-muted-foreground uppercase">
-                            <tr>
-                                <th className="px-4 py-3 font-medium">Date</th>
-                                <th className="px-4 py-3 font-medium">Type</th>
-                                <th className="px-4 py-3 font-medium">
-                                    Supplier item
-                                </th>
-                                <th className="px-4 py-3 font-medium">Qty</th>
-                                <th className="px-4 py-3 font-medium">
-                                    Total cost
-                                </th>
-                                <th className="px-4 py-3 font-medium">Ward</th>
-                                <th className="px-4 py-3 font-medium">
-                                    Recorded by
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {recentTransactions.length === 0 && (
-                                <tr>
-                                    <td
-                                        colSpan={7}
-                                        className="px-4 py-8 text-center text-sm text-muted-foreground"
-                                    >
-                                        No transactions recorded yet.
-                                    </td>
-                                </tr>
-                            )}
-                            {recentTransactions.map((transaction) => (
-                                <tr
-                                    key={transaction.id}
-                                    className="border-b border-border last:border-0"
-                                >
-                                    <td className="px-4 py-3 text-muted-foreground">
-                                        {transaction.transaction_date}
-                                    </td>
-                                    <td className="px-4 py-3 text-foreground">
-                                        {transaction.type_label}
-                                        {transaction.reverses_transaction_id !==
-                                        null ? (
-                                            <span className="ml-1 text-xs text-muted-foreground">
-                                                (reversal)
-                                            </span>
-                                        ) : transaction.is_reversed ? (
-                                            <span className="ml-1 text-xs text-muted-foreground">
-                                                (reversed)
-                                            </span>
-                                        ) : null}
-                                    </td>
-                                    <td className="px-4 py-3 text-muted-foreground">
-                                        {transaction.supplier_name ?? '—'} —{' '}
-                                        {transaction.item_code ?? '—'}
-                                    </td>
-                                    <td className="px-4 py-3 text-foreground">
-                                        {transaction.quantity}
-                                    </td>
-                                    <td className="px-4 py-3 text-foreground">
-                                        {transaction.total_cost}
-                                    </td>
-                                    <td className="px-4 py-3 text-muted-foreground">
-                                        {transaction.ward_name ?? '—'}
-                                    </td>
-                                    <td className="px-4 py-3 text-muted-foreground">
-                                        {transaction.profile_name ?? '—'}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
-            <section className="mt-8">
-                <div className="mb-3 flex items-center justify-between">
-                    <h2 className="text-sm font-semibold text-foreground">
                         Supplier item consumption (last 30 days)
                     </h2>
                     <span className="text-xs text-muted-foreground">
@@ -448,6 +362,92 @@ export default function Dashboard({
                                     </td>
                                     <td className="px-4 py-3 text-right text-muted-foreground">
                                         {row.transaction_count}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section className="mt-8">
+                <div className="mb-3 flex items-center justify-between">
+                    <h2 className="text-sm font-semibold text-foreground">
+                        Recent activity
+                    </h2>
+                    <Link
+                        href="/transactions"
+                        className="text-xs text-primary hover:underline"
+                    >
+                        View all transactions
+                    </Link>
+                </div>
+                <div className="overflow-hidden rounded-lg border border-border bg-card">
+                    <table className="w-full text-left text-sm">
+                        <thead className="border-b border-border bg-muted/50 text-xs text-muted-foreground uppercase">
+                            <tr>
+                                <th className="px-4 py-3 font-medium">Date</th>
+                                <th className="px-4 py-3 font-medium">Type</th>
+                                <th className="px-4 py-3 font-medium">
+                                    Supplier item
+                                </th>
+                                <th className="px-4 py-3 font-medium">Qty</th>
+                                <th className="px-4 py-3 font-medium">
+                                    Total cost
+                                </th>
+                                <th className="px-4 py-3 font-medium">Ward</th>
+                                <th className="px-4 py-3 font-medium">
+                                    Recorded by
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {recentTransactions.length === 0 && (
+                                <tr>
+                                    <td
+                                        colSpan={7}
+                                        className="px-4 py-8 text-center text-sm text-muted-foreground"
+                                    >
+                                        No transactions recorded yet.
+                                    </td>
+                                </tr>
+                            )}
+                            {recentTransactions.map((transaction) => (
+                                <tr
+                                    key={transaction.id}
+                                    className="border-b border-border last:border-0"
+                                >
+                                    <td className="px-4 py-3 text-muted-foreground">
+                                        {transaction.transaction_date}
+                                    </td>
+                                    <td className="px-4 py-3 text-foreground">
+                                        {transaction.type_label}
+                                        {transaction.reverses_transaction_id !==
+                                        null ? (
+                                            <span className="ml-1 text-xs text-muted-foreground">
+                                                (reversal)
+                                            </span>
+                                        ) : transaction.is_reversed ? (
+                                            <span className="ml-1 text-xs text-muted-foreground">
+                                                (reversed)
+                                            </span>
+                                        ) : null}
+                                    </td>
+                                    <td className="px-4 py-3 text-muted-foreground">
+                                        {transaction.supplier_name ?? '—'} —{' '}
+                                        {transaction.item_code ?? '—'}
+                                    </td>
+                                    <td className="px-4 py-3 text-foreground">
+                                        {transaction.quantity}
+                                    </td>
+                                    <td className="px-4 py-3 text-foreground">
+                                        {transaction.total_cost}
+                                    </td>
+                                    <td className="px-4 py-3 text-muted-foreground">
+                                        {transaction.ward_name ?? '—'}
+                                    </td>
+                                    <td className="px-4 py-3 text-muted-foreground">
+                                        {transaction.profile_name ?? '—'}
                                     </td>
                                 </tr>
                             ))}
