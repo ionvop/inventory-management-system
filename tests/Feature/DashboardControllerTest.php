@@ -262,3 +262,108 @@ test('the dashboard shows at most ten recent transactions', function () {
         ->get(route('dashboard'))
         ->assertInertia(fn ($page) => $page->has('recentTransactions', 10));
 });
+
+test('the dashboard summarises consumption within the rolling window only', function () {
+    $this->freezeTime();
+
+    $staff = Profile::factory()->create();
+    $period = Period::factory()->create();
+    $supplierItem = dashboardSupplierItem();
+
+    dashboardMovement($period, $supplierItem, $staff, 'consumption', 3, [
+        'transaction_date' => now()->subDays(29)->toDateString(),
+    ]);
+    dashboardMovement($period, $supplierItem, $staff, 'consumption', 7, [
+        'transaction_date' => now()->subDays(31)->toDateString(),
+    ]);
+
+    $this->withSession(['active_profile_id' => $staff->id])
+        ->get(route('dashboard'))
+        ->assertInertia(fn ($page) => $page
+            ->where('consumptionLast30Days.window_days', 30)
+            ->where('consumptionLast30Days.since', now()->subDays(30)->toDateString())
+            ->has('consumptionLast30Days.rows', 1)
+            ->where('consumptionLast30Days.rows.0.supplier_item_id', $supplierItem->id)
+            ->where('consumptionLast30Days.rows.0.quantity', 3)
+            ->where('consumptionLast30Days.rows.0.total_cost', 300)
+            ->where('consumptionLast30Days.rows.0.transaction_count', 1));
+});
+
+test('a reversal of an in-window consumption subtracts from the dashboard totals', function () {
+    $this->freezeTime();
+
+    $staff = Profile::factory()->create();
+    $period = Period::factory()->create();
+    $supplierItem = dashboardSupplierItem();
+
+    $original = dashboardMovement($period, $supplierItem, $staff, 'consumption', 5, [
+        'transaction_date' => now()->subDays(10)->toDateString(),
+    ]);
+    dashboardMovement($period, $supplierItem, $staff, 'consumption', 5, [
+        'reverses_transaction_id' => $original->id,
+    ]);
+
+    $this->withSession(['active_profile_id' => $staff->id])
+        ->get(route('dashboard'))
+        ->assertInertia(fn ($page) => $page
+            ->where('consumptionLast30Days.rows.0.quantity', 0)
+            ->where('consumptionLast30Days.rows.0.total_cost', 0)
+            ->where('consumptionLast30Days.rows.0.transaction_count', 1));
+});
+
+test('a reversal of an out-of-window consumption is excluded from the dashboard totals', function () {
+    $this->freezeTime();
+
+    $staff = Profile::factory()->create();
+    $period = Period::factory()->create();
+    $supplierItem = dashboardSupplierItem();
+
+    $original = dashboardMovement($period, $supplierItem, $staff, 'consumption', 5, [
+        'transaction_date' => now()->subDays(45)->toDateString(),
+    ]);
+    dashboardMovement($period, $supplierItem, $staff, 'consumption', 5, [
+        'reverses_transaction_id' => $original->id,
+    ]);
+
+    $this->withSession(['active_profile_id' => $staff->id])
+        ->get(route('dashboard'))
+        ->assertInertia(fn ($page) => $page
+            ->where('consumptionLast30Days.rows.0.quantity', 0)
+            ->where('consumptionLast30Days.rows.0.total_cost', 0)
+            ->where('consumptionLast30Days.rows.0.transaction_count', 0));
+});
+
+test('the dashboard lists active supplier items with no consumption', function () {
+    $this->freezeTime();
+
+    $staff = Profile::factory()->create();
+    $supplierItem = dashboardSupplierItem();
+
+    $this->withSession(['active_profile_id' => $staff->id])
+        ->get(route('dashboard'))
+        ->assertInertia(fn ($page) => $page
+            ->has('consumptionLast30Days.rows', 1)
+            ->where('consumptionLast30Days.rows.0.supplier_item_id', $supplierItem->id)
+            ->where('consumptionLast30Days.rows.0.quantity', 0)
+            ->where('consumptionLast30Days.rows.0.total_cost', 0)
+            ->where('consumptionLast30Days.rows.0.transaction_count', 0));
+});
+
+test('the dashboard counts consumption recorded in a closed period', function () {
+    $this->freezeTime();
+
+    $staff = Profile::factory()->create();
+    $period = Period::factory()->create(['status' => 'closed']);
+    $supplierItem = dashboardSupplierItem();
+
+    dashboardMovement($period, $supplierItem, $staff, 'consumption', 4, [
+        'transaction_date' => now()->subDays(5)->toDateString(),
+    ]);
+
+    $this->withSession(['active_profile_id' => $staff->id])
+        ->get(route('dashboard'))
+        ->assertInertia(fn ($page) => $page
+            ->where('consumptionLast30Days.rows.0.quantity', 4)
+            ->where('consumptionLast30Days.rows.0.total_cost', 400)
+            ->where('consumptionLast30Days.rows.0.transaction_count', 1));
+});
