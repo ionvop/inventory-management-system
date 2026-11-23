@@ -17,6 +17,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Dashboard consumption window
+    |--------------------------------------------------------------------------
+    |
+    | The rolling number of days the dashboard uses to summarise how much of
+    | each supplier item has been consumed. The default of 30 days gives the
+    | department a recent-usage view without changing the monthly report.
+    |
+    */
+
+    'consumption_window_days' => (int) env('INVENTORY_CONSUMPTION_WINDOW_DAYS', 30),
+
+    /*
+    |--------------------------------------------------------------------------
     | Low-stock threshold
     |--------------------------------------------------------------------------
     |
