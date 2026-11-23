@@ -57,7 +57,21 @@ class DashboardService
      *         near_expiry_days: int,
      *         low_stock_threshold: float
      *     },
-     *     recentTransactions: array<int, array<string, mixed>>
+     *     recentTransactions: array<int, array<string, mixed>>,
+     *     consumptionLast30Days: array{
+     *         window_days: int,
+     *         since: string,
+     *         rows: array<int, array{
+     *             supplier_item_id: int,
+     *             supplier_name: string|null,
+     *             item_code: string|null,
+     *             item_description: string|null,
+     *             unit: string|null,
+     *             quantity: float,
+     *             total_cost: float,
+     *             transaction_count: int
+     *         }>
+     *     }
      * }
      */
     public function build(string $role): array
@@ -68,6 +82,7 @@ class DashboardService
             'alerts' => $this->alerts($role, $period),
             'summary' => $this->summary($period),
             'recentTransactions' => $this->recentTransactions(),
+            'consumptionLast30Days' => $this->consumptionLast30Days(),
         ];
     }
 
@@ -260,6 +275,111 @@ class DashboardService
                 'is_reversed' => $transaction->reversedBy !== null,
             ])
             ->all();
+    }
+
+    /**
+     * Net consumption per active supplier item over the rolling window.
+     *
+     * Every active supplier item is listed, including those with no
+     * consumption in the window. Figures come from the immutable transaction
+     * log rather than period snapshots, so consumption recorded in a closed
+     * period is still counted. A reversal is attributed to the date of the
+     * consumption it cancels, since the reversal itself is always dated today.
+     *
+     * @return array{
+     *     window_days: int,
+     *     since: string,
+     *     rows: array<int, array{
+     *         supplier_item_id: int,
+     *         supplier_name: string|null,
+     *         item_code: string|null,
+     *         item_description: string|null,
+     *         unit: string|null,
+     *         quantity: float,
+     *         total_cost: float,
+     *         transaction_count: int
+     *     }>
+     * }
+     */
+    protected function consumptionLast30Days(): array
+    {
+        $windowDays = (int) config('inventory.consumption_window_days');
+        $since = now()->subDays($windowDays)->toDateString();
+
+        $supplierItems = SupplierItem::query()
+            ->with(['supplier', 'item'])
+            ->active()
+            ->orderBy('id')
+            ->get();
+
+        $transactions = Transaction::query()
+            ->with('reversesTransaction')
+            ->where('type', 'consumption')
+            ->where('transaction_date', '>=', $since)
+            ->get()
+            ->groupBy('supplier_item_id');
+
+        $rows = $supplierItems
+            ->map(function (SupplierItem $supplierItem) use ($transactions, $since): array {
+                $quantity = 0.0;
+                $cost = 0.0;
+                $count = 0;
+
+                $itemTransactions = $transactions->get($supplierItem->id);
+
+                if ($itemTransactions !== null) {
+                    foreach ($itemTransactions as $transaction) {
+                        // A reversal is dated today, so the date that matters
+                        // is the date of the consumption it cancels.
+                        $effectiveDate = $transaction->isReversal()
+                            ? $transaction->reversesTransaction?->transaction_date?->toDateString()
+                            : $transaction->transaction_date->toDateString();
+
+                        if ($effectiveDate === null || $effectiveDate < $since) {
+                            continue;
+                        }
+
+                        // Show consumption in its natural direction, as the
+                        // monthly report does: a consumption of 3 reads as 3,
+                        // not -3. A reversal subtracts so the pair nets to zero.
+                        $sign = $transaction->isReversal() ? -1.0 : 1.0;
+
+                        $quantity += $sign * (float) $transaction->quantity;
+                        $cost += $sign * (float) $transaction->total_cost;
+
+                        // A reversal cancels a movement, so it does not add
+                        // to the count of consumption movements.
+                        if (! $transaction->isReversal()) {
+                            $count++;
+                        }
+                    }
+                }
+
+                return [
+                    'supplier_item_id' => $supplierItem->id,
+                    'supplier_name' => $supplierItem->supplier?->name,
+                    'item_code' => $supplierItem->item?->code,
+                    'item_description' => $supplierItem->item?->description,
+                    'unit' => $supplierItem->item?->unit,
+                    'quantity' => round($quantity, 2),
+                    'total_cost' => round($cost, 2),
+                    'transaction_count' => $count,
+                ];
+            })
+            ->sortBy(fn (array $row): string => sprintf(
+                '%s|%s|%d',
+                $row['supplier_name'] ?? '',
+                $row['item_code'] ?? '',
+                $row['supplier_item_id'],
+            ))
+            ->values()
+            ->all();
+
+        return [
+            'window_days' => $windowDays,
+            'since' => $since,
+            'rows' => $rows,
+        ];
     }
 
     /**
